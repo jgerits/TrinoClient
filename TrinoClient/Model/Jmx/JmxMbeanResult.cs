@@ -1,0 +1,21 @@
+﻿using System.Collections.Generic;
+
+namespace TrinoClient.Model.Jmx
+{
+    public class JmxMbeanV1Result
+    {
+        #region Public Properties
+
+        public string ObjectName { get; set; }
+
+        public string ClassName { get; set; }
+
+        public string Description { get; set; }
+
+        public IEnumerable<JmxMbeanAttribute> Attributes { get; set; }
+
+        public IEnumerable<JmxMbeanOperation> Operations { get; set; }
+
+        #endregion
+    }
+}
