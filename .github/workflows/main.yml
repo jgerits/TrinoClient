@@ -20,7 +20,7 @@ jobs:
         uses: brandedoutcast/publish-nuget@v2.5.5
         with:
           # Filepath of the project to be packaged, relative to root of repository
-          PROJECT_FILE_PATH: PrestoClient/PrestoClient.csproj
+          PROJECT_FILE_PATH: TrinoClient/TrinoClient.csproj
           
           # NuGet package id, used for version detection & defaults to project name
           # PACKAGE_NAME: TrinoClient
