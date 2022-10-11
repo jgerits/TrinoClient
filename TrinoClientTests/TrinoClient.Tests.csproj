@@ -6,8 +6,6 @@
     <IsPackable>false</IsPackable>
 
     <SignAssembly>true</SignAssembly>
-
-    <!--<AssemblyOriginatorKeyFile>prestoclient.tests.snk</AssemblyOriginatorKeyFile>-->
   </PropertyGroup>
 
   <ItemGroup>
