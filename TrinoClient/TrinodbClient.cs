@@ -1198,8 +1198,8 @@ namespace TrinoClient
             }
 
             request.Headers.Add("Accept", "application/json");
-            request.Headers.Add("User-Agent", $"bamcis_presto_dotnet_core_sdk/{AssemblyVersion}");
-            request.Headers.Add(TrinoHeader.TRINO_SOURCE.Value, "bamcis_presto_dotnet_core_sdk");
+            request.Headers.Add("User-Agent", $"trinodb_dotnet_core_sdk/{AssemblyVersion}");
+            request.Headers.Add(TrinoHeader.TRINO_SOURCE.Value, "trinodb_dotnet_core_sdk");
 
             if (!String.IsNullOrEmpty(this.Configuration.User))
             {
