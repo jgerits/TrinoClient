@@ -1,10 +1,10 @@
-﻿using TrinoClient.Model.SPI.Type;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using System;
-using System.ComponentModel;
-using System.Reflection;
-using System.Linq;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Linq;
+using System.Reflection;
+using TrinoClient.Model.SPI.Type;
 
 namespace TrinoClient.Serialization
 {
@@ -35,7 +35,7 @@ namespace TrinoClient.Serialization
         {
             string Temp = reader.Value.ToString();
 
-            if (String.IsNullOrEmpty(Temp))
+            if (string.IsNullOrEmpty(Temp))
             {
                 return ParameterKind.VARIABLE;
             }

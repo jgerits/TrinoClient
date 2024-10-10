@@ -1,17 +1,17 @@
-﻿using TrinoClient.Model;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using TrinoClient.Model;
 
 namespace TrinoClient.Serialization
 {
     public class DataSizeConverter : JsonConverter
     {
-        private static readonly Regex Pattern = new Regex("([0-9]+(?:\\.[0-9]+)?)([a-zA-Z]+)?");
+        private static readonly Regex Pattern = new("([0-9]+(?:\\.[0-9]+)?)([a-zA-Z]+)?");
 
         public override bool CanConvert(Type objectType)
         {
@@ -41,7 +41,7 @@ namespace TrinoClient.Serialization
 
             if (RegexMatch.Success)
             {
-                double Size = Double.Parse(RegexMatch.Groups[1].Value);
+                double Size = double.Parse(RegexMatch.Groups[1].Value);
                 string Unit = RegexMatch.Groups[2].Value;
 
                 IEnumerable<DataSizeUnit> MatchingEnums = Enum.GetValues(typeof(DataSizeUnit)).Cast<DataSizeUnit>().Where(x => x.GetType().GetMember(x.ToString()).FirstOrDefault().GetCustomAttribute<DescriptionAttribute>().Description == Unit);

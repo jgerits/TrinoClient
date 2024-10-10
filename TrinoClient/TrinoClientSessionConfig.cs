@@ -1,9 +1,9 @@
-﻿using TrinoClient.Model.SPI.Type;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
 using TrinoClient.Model;
+using TrinoClient.Model.SPI.Type;
 
 namespace TrinoClient
 {
@@ -51,13 +51,13 @@ namespace TrinoClient
         {
             get
             {
-                return this._Port;
+                return _Port;
             }
             set
             {
                 if (value <= 65535 && value >= 1)
                 {
-                    this._Port = value;
+                    _Port = value;
                 }
                 else
                 {
@@ -74,16 +74,16 @@ namespace TrinoClient
         {
             get
             {
-                return this._User;
+                return _User;
             }
             set
             {
-                if (String.IsNullOrEmpty(value))
+                if (string.IsNullOrEmpty(value))
                 {
                     throw new ArgumentNullException("User", "The user name cannot be null or empty.");
                 }
 
-                this._User = value;
+                _User = value;
             }
         }
 
@@ -111,7 +111,7 @@ namespace TrinoClient
         {
             get
             {
-                return this._CheckInterval;
+                return _CheckInterval;
             }
             set
             {
@@ -125,7 +125,7 @@ namespace TrinoClient
                     throw new ArgumentOutOfRangeException("CheckInterval", "The maximum check interval is 5000ms.");
                 }
 
-                this._CheckInterval = value;
+                _CheckInterval = value;
             }
 
         }
@@ -180,13 +180,13 @@ namespace TrinoClient
 
             get
             {
-                return this._Properties;
+                return _Properties;
             }
             set
             {
                 foreach (KeyValuePair<string, string> Item in value)
                 {
-                    if (String.IsNullOrEmpty(Item.Key))
+                    if (string.IsNullOrEmpty(Item.Key))
                     {
                         throw new ArgumentNullException("Properties", "Session property key name is empty.");
                     }
@@ -211,7 +211,7 @@ namespace TrinoClient
                     }
                 }
 
-                this._Properties = value;
+                _Properties = value;
             }
         }
 
@@ -237,7 +237,7 @@ namespace TrinoClient
 
             get
             {
-                return this._ClientTags;
+                return _ClientTags;
             }
             set
             {
@@ -249,7 +249,7 @@ namespace TrinoClient
                     }
                 }
 
-                this._ClientTags = value;
+                _ClientTags = value;
             }
         }
 
@@ -272,20 +272,20 @@ namespace TrinoClient
         /// </summary>
         public TrinoClientSessionConfig()
         {
-            this.Host = _DEFAULT_HOST;
-            this.Port = _DEFAULT_PORT;
-            this.User = Environment.GetEnvironmentVariable("USERNAME") ?? Environment.GetEnvironmentVariable("USER");
-            this.CheckInterval = _QUERY_STATE_CHECK_INTERVAL;
-            this.IgnoreSslErrors = false;
-            this.UseSsl = false;
-            this.Version = TrinoApiVersion.V1;
-            this.ClientTags = new HashSet<string>();
-            this.Debug = false;
-            this.Properties = new Dictionary<string, string>();
-            this.PreparedStatements = new Dictionary<string, string>();
-            this.TimeZone = TimeZoneKey.GetTimeZoneKey(0);
-            this.Locale = CultureInfo.CurrentCulture;
-            this.ClientRequestTimeout = _DEFAULT_TIMEOUT;
+            Host = _DEFAULT_HOST;
+            Port = _DEFAULT_PORT;
+            User = Environment.GetEnvironmentVariable("USERNAME") ?? Environment.GetEnvironmentVariable("USER");
+            CheckInterval = _QUERY_STATE_CHECK_INTERVAL;
+            IgnoreSslErrors = false;
+            UseSsl = false;
+            Version = TrinoApiVersion.V1;
+            ClientTags = [];
+            Debug = false;
+            Properties = new Dictionary<string, string>();
+            PreparedStatements = new Dictionary<string, string>();
+            TimeZone = TimeZoneKey.GetTimeZoneKey(0);
+            Locale = CultureInfo.CurrentCulture;
+            ClientRequestTimeout = _DEFAULT_TIMEOUT;
         }
 
         /// <summary>
@@ -296,9 +296,9 @@ namespace TrinoClient
         /// <param name="catalog">The default catalog to use</param>
         public TrinoClientSessionConfig(string host, int port, string catalog) : this()
         {
-            this.Host = host;
-            this.Port = port;
-            this.Catalog = catalog;
+            Host = host;
+            Port = port;
+            Catalog = catalog;
         }
 
         /// <summary>
@@ -307,7 +307,7 @@ namespace TrinoClient
         /// <param name="catalog">The default catalog to use</param>
         public TrinoClientSessionConfig(string catalog) : this()
         {
-            this.Catalog = catalog;
+            Catalog = catalog;
         }
 
         /// <summary>
@@ -317,7 +317,7 @@ namespace TrinoClient
         /// <param name="schema">The schema to use</param>
         public TrinoClientSessionConfig(string catalog, string schema) : this(catalog)
         {
-            this.Schema = schema;
+            Schema = schema;
         }
 
         /// <summary>
@@ -328,7 +328,7 @@ namespace TrinoClient
         /// <param name="schema">The schema to use</param>
         public TrinoClientSessionConfig(string host, string catalog, string schema) : this(catalog, schema)
         {
-            this.Host = host;
+            Host = host;
         }
 
         /// <summary>
@@ -340,7 +340,7 @@ namespace TrinoClient
         /// <param name="schema">The schema to use</param>
         public TrinoClientSessionConfig(string host, int port, string catalog, string schema) : this(host, port, catalog)
         {
-            this.Schema = schema;
+            Schema = schema;
         }
 
         /// <summary>
@@ -373,14 +373,14 @@ namespace TrinoClient
             long timeout
             ) : this(host, port, catalog, schema)
         {
-            this.User = user;
-            this.ClientTags = clientTags;
-            this.ClientInfo = clientInfo;
-            this.Locale = locale;
-            this.Properties = properties;
-            this.PreparedStatements = preparedStatements;
-            this.Debug = debug;
-            this.ClientRequestTimeout = timeout;
+            User = user;
+            ClientTags = clientTags;
+            ClientInfo = clientInfo;
+            Locale = locale;
+            Properties = properties;
+            PreparedStatements = preparedStatements;
+            Debug = debug;
+            ClientRequestTimeout = timeout;
         }
 
         #endregion
