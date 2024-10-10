@@ -24,7 +24,7 @@ namespace TrinoClient.Serialization
 
         public override bool CanConvert(Type objectType)
         {
-            return (objectType == typeof(string));
+            return objectType == typeof(string);
         }
 
         public override bool CanWrite

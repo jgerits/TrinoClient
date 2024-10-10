@@ -78,7 +78,7 @@ namespace TrinoClient.Model.Client
                 }
                 else
                 {
-                    return Math.Min(100, (CompletedSplits * 100.0) / TotalSplits);
+                    return Math.Min(100, CompletedSplits * 100.0 / TotalSplits);
                 }
             }
         }

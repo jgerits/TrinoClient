@@ -292,7 +292,7 @@ namespace TrinoClient.Model.SPI.Predicate
 
             return Object.Equals(Type, Other.Type)
                     && Object.Equals(Bound, Other.Bound)
-                    && ((ValueBlock != null) == (Other.ValueBlock != null))
+                    && (ValueBlock != null == (Other.ValueBlock != null))
                     && (ValueBlock == null || Type.EqualTo(ValueBlock, 0, Other.ValueBlock, 0));
         }
 

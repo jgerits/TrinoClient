@@ -123,7 +123,7 @@ namespace TrinoClient.Model
 
         private static long GetTickInSeconds()
         {
-            return (DateTime.UtcNow.Ticks / TimeSpan.TicksPerSecond);
+            return DateTime.UtcNow.Ticks / TimeSpan.TicksPerSecond;
         }
 
         private void RescaleToNewLandmark(long newLandMarkInSeconds)

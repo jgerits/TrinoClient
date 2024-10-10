@@ -71,7 +71,7 @@ namespace TrinoClient.Model.Execution
 
         public override string ToString()
         {
-            return (Grouped) ? $"Group{GroupId}" : TASK_WIDE_STR;
+            return Grouped ? $"Group{GroupId}" : TASK_WIDE_STR;
         }
 
         #endregion

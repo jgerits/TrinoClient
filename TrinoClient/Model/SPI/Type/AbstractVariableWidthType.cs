@@ -36,7 +36,7 @@ namespace TrinoClient.Model.SPI.Type
 
             return new VariableWidthBlockBuilder(
                 blockBuilderStatus,
-                (expectedBytesPerEntry == 0 ? expectedEntries : Math.Min(expectedEntries, MaxBlockSizeInBytes / expectedBytesPerEntry)),
+                expectedBytesPerEntry == 0 ? expectedEntries : Math.Min(expectedEntries, MaxBlockSizeInBytes / expectedBytesPerEntry),
                 ExpectedBytes
                 );
         }

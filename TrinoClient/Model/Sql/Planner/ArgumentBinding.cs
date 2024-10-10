@@ -21,7 +21,7 @@ namespace TrinoClient.Model.Sql.Planner
         [JsonConstructor]
         public ArgumentBinding(Symbol column, object constant)
         {
-            if ((column != null) == (constant != null))
+            if (column != null == (constant != null))
             {
                 throw new ArgumentException("Either column or constant must be set, not both, and both cannot be null.");
             }

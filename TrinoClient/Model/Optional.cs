@@ -60,7 +60,7 @@
 
         public static Optional<T> OfNullable(T value)
         {
-            return ((value == null) ? Empty() : Of(value));
+            return (value == null) ? Empty() : Of(value);
         }
 
         #endregion

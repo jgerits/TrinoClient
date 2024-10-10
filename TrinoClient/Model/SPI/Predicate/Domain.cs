@@ -93,7 +93,7 @@ namespace TrinoClient.Model.SPI.Predicate
 
         public bool IncludesNullableValue(object value)
         {
-            return (value == null ? NullAllowed : Values.ContainsValue(value));
+            return value == null ? NullAllowed : Values.ContainsValue(value);
         }
 
         public bool Overlaps(Domain other)

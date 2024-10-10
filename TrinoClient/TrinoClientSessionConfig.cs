@@ -19,8 +19,6 @@ namespace TrinoClient
     public sealed class TrinoClientSessionConfig
     {
         #region Defaults
-
-        private static readonly int _QUERY_STATE_CHECK_INTERVAL = 800; // Milliseconds
         private static readonly string _DEFAULT_HOST = "localhost";
         private static readonly int _DEFAULT_PORT = 8080;
         private static readonly long _DEFAULT_TIMEOUT = -1; // Anything 0 or below indicates that the client will never timeout a query
@@ -101,34 +99,6 @@ namespace TrinoClient
         /// The schema to connect to in presto. This defaults to 'default'.
         /// </summary>
         public string Schema { get; set; }
-
-        /// <summary>
-        /// The amount of time in milliseconds that the client will wait in between
-        /// checks for new data from presto. The minimum interval is 50ms and the maximum interval
-        /// is 5000ms. This defaults to 800ms.
-        /// </summary>
-        public int CheckInterval
-        {
-            get
-            {
-                return _CheckInterval;
-            }
-            set
-            {
-                if (value < 50)
-                {
-                    throw new ArgumentOutOfRangeException("CheckInterval", "The minimum check interval is 50ms.");
-                }
-
-                if (value > 5000)
-                {
-                    throw new ArgumentOutOfRangeException("CheckInterval", "The maximum check interval is 5000ms.");
-                }
-
-                _CheckInterval = value;
-            }
-
-        }
 
         /// <summary>
         /// Whether to ignore SSL errors produced by connecting to presto over an SSL
@@ -275,7 +245,6 @@ namespace TrinoClient
             Host = _DEFAULT_HOST;
             Port = _DEFAULT_PORT;
             User = Environment.GetEnvironmentVariable("USERNAME") ?? Environment.GetEnvironmentVariable("USER");
-            CheckInterval = _QUERY_STATE_CHECK_INTERVAL;
             IgnoreSslErrors = false;
             UseSsl = false;
             Version = TrinoApiVersion.V1;

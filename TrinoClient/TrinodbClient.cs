@@ -134,7 +134,7 @@ namespace TrinoClient
         /// </returns>
         public async Task<ListThreadsV1Response> ListThreads(CancellationToken cancellationToken)
         {
-            HttpClient LocalClient = (Configuration.IgnoreSslErrors) ? IgnoreSslErrorClient : NormalClient;
+            HttpClient LocalClient = Configuration.IgnoreSslErrors ? IgnoreSslErrorClient : NormalClient;
 
             Uri Path = BuildUri("/thread");
 
@@ -174,11 +174,11 @@ namespace TrinoClient
         /// <returns>The web page html/javascript/css.</returns>
         public async Task<string> GetThreadUIHtml(CancellationToken cancellationToken)
         {
-            HttpClient LocalClient = (Configuration.IgnoreSslErrors) ? IgnoreSslErrorClient : NormalClient;
+            HttpClient LocalClient = Configuration.IgnoreSslErrors ? IgnoreSslErrorClient : NormalClient;
 
             StringBuilder SB = new();
 
-            string Scheme = (Configuration.UseSsl) ? "https" : "http";
+            string Scheme = Configuration.UseSsl ? "https" : "http";
             SB.Append($"{Scheme}://{Configuration.Host}");
 
             // Only add non-standard ports
@@ -231,7 +231,7 @@ namespace TrinoClient
         /// </returns>
         public async Task<ListNodesV1Response> ListNodes(CancellationToken cancellationToken)
         {
-            HttpClient LocalClient = (Configuration.IgnoreSslErrors) ? IgnoreSslErrorClient : NormalClient;
+            HttpClient LocalClient = Configuration.IgnoreSslErrors ? IgnoreSslErrorClient : NormalClient;
 
             Uri Path = BuildUri("/node");
 
@@ -275,11 +275,11 @@ namespace TrinoClient
         /// </returns>
         public async Task<ListFailedNodesV1Response> ListFailedNodes(CancellationToken cancellationToken)
         {
-            HttpClient LocalClient = (Configuration.IgnoreSslErrors) ? IgnoreSslErrorClient : NormalClient;
+            HttpClient LocalClient = Configuration.IgnoreSslErrors ? IgnoreSslErrorClient : NormalClient;
 
             StringBuilder SB = new();
 
-            string Scheme = (Configuration.UseSsl) ? "https" : "http";
+            string Scheme = Configuration.UseSsl ? "https" : "http";
             SB.Append($"{Scheme}://{Configuration.Host}");
 
             // Only add non-standard ports
@@ -330,7 +330,7 @@ namespace TrinoClient
         /// <returns>No value is returned, but the method will throw an exception if it was not successful</returns>
         public async Task KillQuery(string queryId, CancellationToken cancellationToken)
         {
-            HttpClient localClient = (Configuration.IgnoreSslErrors) ? IgnoreSslErrorClient : NormalClient;
+            HttpClient localClient = Configuration.IgnoreSslErrors ? IgnoreSslErrorClient : NormalClient;
 
             Uri Path = BuildUri($"/query/{queryId}");
 
@@ -363,7 +363,7 @@ namespace TrinoClient
         /// <returns>Details on the queries</returns>
         public async Task<ListQueriesV1Response> GetQueries(CancellationToken cancellationToken)
         {
-            HttpClient LocalClient = (Configuration.IgnoreSslErrors) ? IgnoreSslErrorClient : NormalClient;
+            HttpClient LocalClient = Configuration.IgnoreSslErrors ? IgnoreSslErrorClient : NormalClient;
 
             Uri Path = BuildUri($"/query");
 
@@ -401,7 +401,7 @@ namespace TrinoClient
         /// <returns>Detailed summary of the query</returns>
         public async Task<GetQueryV1Response> GetQuery(string queryId, CancellationToken CancellationToken)
         {
-            HttpClient LocalClient = (Configuration.IgnoreSslErrors) ? IgnoreSslErrorClient : NormalClient;
+            HttpClient LocalClient = Configuration.IgnoreSslErrors ? IgnoreSslErrorClient : NormalClient;
 
             Uri Path = BuildUri($"/query/{queryId}");
 
@@ -467,124 +467,105 @@ namespace TrinoClient
         public async Task<ExecuteQueryV1Response> ExecuteQueryV1(ExecuteQueryV1Request request, CancellationToken cancellationToken)
         {
             // Check the required configuration items before running the query
-            if (!CheckConfiguration(out Exception Ex))
+            if (!CheckConfiguration(out Exception ex))
             {
-                throw Ex;
+            throw ex;
             }
 
             // Track all of the incremental results as they are returned
-            List<QueryResultsV1> Results = [];
+            var results = new List<QueryResultsV1>();
 
-            // Choose the correct client to use for ssl errors
-            HttpClient LocalClient = (Configuration.IgnoreSslErrors) ? IgnoreSslErrorClient : NormalClient;
+            // Choose the correct client to use for SSL errors
+            var localClient = Configuration.IgnoreSslErrors ? IgnoreSslErrorClient : NormalClient;
 
-            // Build the url path
-            Uri Path = BuildUri("/statement");
+            // Build the URL path
+            var path = BuildUri("/statement");
 
             // Create a new request to post with the query
-            HttpRequestMessage Request = BuildRequest(Path, HttpMethod.Post, new StringContent(request.Query));
+            var httpRequest = BuildRequest(path, HttpMethod.Post, new StringContent(request.Query));
 
             // Add all of the configured headers to the request
-            BuildQueryHeaders(ref Request, request.Options);
+            BuildQueryHeaders(ref httpRequest, request.Options);
 
             // Use the stopwatch to measure if we've exceeded the specified timeout
-            Stopwatch SW = new();
-
+            var stopwatch = new Stopwatch();
             if (Configuration.ClientRequestTimeout > 0)
             {
-                SW.Start();
+            stopwatch.Start();
             }
 
-            // This is the original submission result, will contain the nextUri
-            // property to follow in order to get the results
-            HttpResponseMessage ResponseMessage = await MakeHttpRequest(LocalClient, Request, cancellationToken: cancellationToken);
+            // This is the original submission result, will contain the nextUri property to follow in order to get the results
+            var responseMessage = await MakeHttpRequest(localClient, httpRequest, cancellationToken: cancellationToken);
 
             // This doesn't really do anything but evaluate the headers right now
-            ProcessResponseHeaders(ResponseMessage);
+            ProcessResponseHeaders(responseMessage);
 
-            string Content = await ResponseMessage.Content.ReadAsStringAsync(cancellationToken);
+            var content = await responseMessage.Content.ReadAsStringAsync(cancellationToken);
 
             // If parsing the submission response fails, return and exit
-            if (!QueryResultsV1.TryParse(Content, out QueryResultsV1 Response, out Exception ParseEx))
+            if (!QueryResultsV1.TryParse(content, out var response, out var parseEx))
             {
-                throw new TrinoException($"The query submission response could not be parsed.", Content, ParseEx);
+            throw new TrinoException("The query submission response could not be parsed.", content, parseEx);
             }
-            else
+
+            // Check to make sure there wasn't an error provided
+            if (response.Error != null)
             {
-                // Check to make sure there wasn't an error provided
-                if (Response.Error != null)
-                {
-                    throw new TrinoQueryException(Response.Error);
-                }
-
-                Results.Add(Response);
-
-                // Keep track of the last, non-null uri so we can
-                // send a delete request to it at the end
-                Uri LastUri = Path;
-
-                // Recursively fetch results from the next URI
-                await FetchNextResults(LocalClient, Response.NextUri, Results, cancellationToken, SW);
-
-                bool Closed = false;
-
-                // Explicitly closes the query
-                ResponseMessage = await LocalClient.SendAsync(new HttpRequestMessage(HttpMethod.Delete, LastUri), cancellationToken);
-
-                // If a 204 is not returned, the query was not successfully closed
-                if (ResponseMessage.StatusCode == HttpStatusCode.NoContent)
-                {
-                    Closed = true;
-                }
-
-                ExecuteQueryV1Response QueryResponse = new(Results, Closed);
-
-                return QueryResponse;
+            throw new TrinoQueryException(response.Error);
             }
+
+            results.Add(response);
+
+            // Keep track of the last, non-null URI so we can send a delete request to it at the end
+            var lastUri = path;
+
+            // Recursively fetch results from the next URI
+            await FetchNextResults(localClient, response.NextUri, results, cancellationToken, stopwatch);
+
+            // Explicitly closes the query
+            responseMessage = await localClient.SendAsync(new HttpRequestMessage(HttpMethod.Delete, lastUri), cancellationToken);
+
+            // If a 204 is not returned, the query was not successfully closed
+            var closed = responseMessage.StatusCode == HttpStatusCode.NoContent;
+
+            return new ExecuteQueryV1Response(results, closed);
         }
-
-        private async Task FetchNextResults(HttpClient LocalClient, Uri NextUri, List<QueryResultsV1> Results, CancellationToken cancellationToken, Stopwatch SW)
+        private async Task FetchNextResults(HttpClient localClient, Uri nextUri, List<QueryResultsV1> results, CancellationToken cancellationToken, Stopwatch stopwatch)
         {
-            if (NextUri == null || (Configuration.ClientRequestTimeout > 0 && SW.Elapsed.TotalSeconds > Configuration.ClientRequestTimeout))
+            if (nextUri == null || (Configuration.ClientRequestTimeout > 0 && stopwatch.Elapsed.TotalSeconds > Configuration.ClientRequestTimeout))
             {
-                return;
+            return;
             }
-
-            // Put a pause in between each call to reduce CPU usage
-            await Task.Delay(Configuration.CheckInterval, cancellationToken);
 
             // Make the request and get back a valid response, otherwise
             // the MakeRequest method will throw an exception
-            HttpRequestMessage Request = BuildRequest(NextUri, HttpMethod.Get);
+            var request = BuildRequest(nextUri, HttpMethod.Get);
 
-            HttpResponseMessage ResponseMessage = await MakeHttpRequest(LocalClient, Request, cancellationToken: cancellationToken);
+            var responseMessage = await MakeHttpRequest(localClient, request, cancellationToken: cancellationToken);
 
-            ProcessResponseHeaders(ResponseMessage);
+            ProcessResponseHeaders(responseMessage);
 
-            string Content = await ResponseMessage.Content.ReadAsStringAsync();
+            var content = await responseMessage.Content.ReadAsStringAsync(cancellationToken);
 
             // Make sure deserialization succeeded
-            if (QueryResultsV1.TryParse(Content, out QueryResultsV1 Response, out Exception ParseEx))
+            if (QueryResultsV1.TryParse(content, out var response, out var parseEx))
             {
-                Results.Add(Response);
+            results.Add(response);
 
-                // Check to make sure there wasn't an error provided
-                if (Response.Error != null)
-                {
-                    throw new TrinoQueryException(Response.Error);
-                }
+            // Check to make sure there wasn't an error provided
+            if (response.Error != null)
+            {
+                throw new TrinoQueryException(response.Error);
+            }
 
-                // Recursively fetch results from the next URI
-                await FetchNextResults(LocalClient, Response.NextUri, Results, cancellationToken, SW);
+            // Recursively fetch results from the next URI
+            await FetchNextResults(localClient, response.NextUri, results, cancellationToken, stopwatch);
             }
             else
             {
-                throw new TrinoException("The response from presto could not be deserialized.", Content, ParseEx);
+            throw new TrinoException("The response from presto could not be deserialized.", content, parseEx);
             }
         }
-        #endregion
-
-        #region JMX
 
         /// <summary>
         /// Gets details about a specified Jmx Mbean
@@ -714,7 +695,7 @@ namespace TrinoClient
 
             StringBuilder SB = new();
 
-            string Scheme = (Configuration.UseSsl) ? "https" : "http";
+            string Scheme = Configuration.UseSsl ? "https" : "http";
             SB.Append($"{Scheme}://{Configuration.Host}");
 
             // Only add non-standard ports

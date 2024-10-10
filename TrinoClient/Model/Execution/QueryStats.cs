@@ -133,7 +133,7 @@ namespace TrinoClient.Model.Execution
                 }
                 else
                 {
-                    return Math.Min(100, (CompletedDrivers * 100.0) / TotalDrivers);
+                    return Math.Min(100, CompletedDrivers * 100.0 / TotalDrivers);
                 }
             }
         }

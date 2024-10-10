@@ -12,7 +12,7 @@ namespace TrinoClient.Serialization
     {
         public override bool CanConvert(Type objectType)
         {
-            return (objectType == typeof(ParameterKind));
+            return objectType == typeof(ParameterKind);
         }
 
         public override bool CanWrite
