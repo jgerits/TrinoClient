@@ -46,9 +46,11 @@ jobs:
         run: dotnet test --configuration Release --no-build --verbosity normal --filter "Category!=Integration"
 
       - name: Create NuGet package
+        if: github.event_name != 'pull_request'
         run: dotnet pack --configuration Release --no-build --output ./artifacts
 
       - name: Upload package artifacts
+        if: github.event_name != 'pull_request'
         uses: actions/upload-artifact@v4
         with:
           name: nuget-packages
