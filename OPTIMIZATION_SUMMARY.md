@@ -23,7 +23,8 @@ This document summarizes the optimizations made to the TrinoClient library based
 
 **Implementation**:
 - Set `HttpClient.Timeout = TimeSpan.FromMinutes(5)` for both normal and SSL-error-ignoring clients
-- This provides a reasonable default timeout for long-running queries while preventing indefinite waits
+- Chose 5 minutes to accommodate potentially long-running analytical queries while still preventing indefinite waits
+- Note: The official client uses 100 seconds; users can adjust this by modifying the HttpClient timeout if needed
 
 **Impact**: Better error handling and resource management, especially in production environments.
 
@@ -33,7 +34,7 @@ This document summarizes the optimizations made to the TrinoClient library based
 **Why**: Eliminates unnecessary synchronization context captures, reducing overhead and improving performance.
 
 **Implementation**:
-- Applied to all 38+ async method calls in TrinodbClient.cs
+- Applied to all async method calls throughout TrinodbClient.cs
 - Prevents deadlocks in mixed sync/async code
 - Reduces thread pool pressure in ASP.NET and other synchronization context environments
 
