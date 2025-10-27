@@ -233,6 +233,24 @@ namespace TrinoClient
         public bool CompressionDisabled { get; set; }
 
         /// <summary>
+        /// The maximum lifetime of a pooled connection. Connections are recycled after this time to respect DNS changes.
+        /// Default is 10 minutes.
+        /// </summary>
+        public TimeSpan PooledConnectionLifetime { get; set; }
+
+        /// <summary>
+        /// The idle timeout for a pooled connection. Idle connections are closed after this time.
+        /// Default is 2 minutes.
+        /// </summary>
+        public TimeSpan PooledConnectionIdleTimeout { get; set; }
+
+        /// <summary>
+        /// The maximum number of concurrent connections per server.
+        /// Default is 10.
+        /// </summary>
+        public int MaxConnectionsPerServer { get; set; }
+
+        /// <summary>
         /// The timeout in seconds for how long to wait for a query to finish
         /// </summary>
         public long ClientRequestTimeout { get; set; }
@@ -260,6 +278,9 @@ namespace TrinoClient
             TimeZone = TimeZoneKey.GetTimeZoneKey(0);
             Locale = CultureInfo.CurrentCulture;
             ClientRequestTimeout = _DEFAULT_TIMEOUT;
+            PooledConnectionLifetime = TimeSpan.FromMinutes(10);
+            PooledConnectionIdleTimeout = TimeSpan.FromMinutes(2);
+            MaxConnectionsPerServer = 10;
         }
 
         /// <summary>
