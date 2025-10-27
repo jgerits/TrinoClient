@@ -931,5 +931,41 @@ namespace TrinoClient
         }
 
         #endregion
+
+        #region IDisposable Support
+
+        private bool _disposed = false;
+
+        /// <summary>
+        /// Disposes the HttpClient and HttpClientHandler resources
+        /// </summary>
+        /// <param name="disposing">Whether to dispose managed resources</param>
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposed)
+            {
+                if (disposing)
+                {
+                    // Dispose managed resources
+                    NormalClient?.Dispose();
+                    IgnoreSslErrorClient?.Dispose();
+                    NormalHandler?.Dispose();
+                    IgnoreSslErrorHandler?.Dispose();
+                }
+
+                _disposed = true;
+            }
+        }
+
+        /// <summary>
+        /// Disposes the HttpClient and HttpClientHandler resources
+        /// </summary>
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        #endregion
     }
 }
