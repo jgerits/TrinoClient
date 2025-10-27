@@ -153,12 +153,12 @@ namespace TrinoClient.Model.Client
                 }
                 else
                 {
-                    if (LiteralArguments.Any())
+                    if (literalArguments.Any())
                     {
                         throw new ArgumentException("Unexpected literal arguments from legacy server.");
                     }
 
-                    foreach (ClientTypeSignature TypeArgument in TypeArguments)
+                    foreach (ClientTypeSignature TypeArgument in typeArguments)
                     {
                         ConvertedArguments.Add(new ClientTypeSignatureParameter(ParameterKind.TYPE, TypeArgument));
                     }

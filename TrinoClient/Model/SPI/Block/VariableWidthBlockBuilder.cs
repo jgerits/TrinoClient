@@ -14,8 +14,6 @@ namespace TrinoClient.Model.SPI.Block
 
         private int _InitialEntryCount;
 
-        private bool _Initialized;
-
         private int _InitialSliceOutputSize;
 
         private bool[] _ValueIsNull = [];
@@ -23,10 +21,6 @@ namespace TrinoClient.Model.SPI.Block
         private int[] _Offsets = new int[1];
 
         private long _ArraysRetainedSizeInBytes;
-
-        private int _CurrentEntrySize;
-
-        private SliceOutput _SliceOutput; // = new DynamicSliceOutput(0);
 
         #endregion
 
@@ -265,6 +259,7 @@ namespace TrinoClient.Model.SPI.Block
             _ArraysRetainedSizeInBytes = Marshal.SizeOf(_ValueIsNull) + Marshal.SizeOf(_Offsets);
         }
 
+        /*
         private void InitializeCapacity()
         {
             if (PositionCount != 0 || _CurrentEntrySize != 0)
@@ -278,6 +273,7 @@ namespace TrinoClient.Model.SPI.Block
             _SliceOutput = null; // new DynamicSliceOutput(this._InitialSliceOutputSize);
             UpdateArraysDataSize();
         }
+        */
 
         #endregion
     }

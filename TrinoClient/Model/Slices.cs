@@ -15,10 +15,6 @@
 
         private static readonly int MAX_ARRAY_SIZE = int.MaxValue - 8;
 
-        private static readonly int SLICE_ALLOC_THRESHOLD = 524288; // 2^19
-
-        private static readonly double SLICE_ALLOW_SKEW = 1.25; // Must be > 1
-
         #endregion
 
         #region Constructors
