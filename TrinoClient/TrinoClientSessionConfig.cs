@@ -228,6 +228,11 @@ namespace TrinoClient
         public bool Debug { get; set; }
 
         /// <summary>
+        /// Disables HTTP compression (GZip/Deflate) for responses. Compression is enabled by default.
+        /// </summary>
+        public bool CompressionDisabled { get; set; }
+
+        /// <summary>
         /// The timeout in seconds for how long to wait for a query to finish
         /// </summary>
         public long ClientRequestTimeout { get; set; }
@@ -249,6 +254,7 @@ namespace TrinoClient
             Version = TrinoApiVersion.V1;
             ClientTags = [];
             Debug = false;
+            CompressionDisabled = false;
             Properties = new Dictionary<string, string>();
             PreparedStatements = new Dictionary<string, string>();
             TimeZone = TimeZoneKey.GetTimeZoneKey(0);

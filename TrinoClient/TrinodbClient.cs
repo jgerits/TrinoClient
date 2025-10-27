@@ -69,7 +69,7 @@ namespace TrinoClient
             NormalHandler = new HttpClientHandler()
             {
                 CookieContainer = Cookies,
-                AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+                AutomaticDecompression = Configuration.CompressionDisabled ? DecompressionMethods.None : DecompressionMethods.GZip | DecompressionMethods.Deflate,
                 ServerCertificateCustomValidationCallback = (request, cert, chain, sslPolicyErrors) =>
                 {
                     return sslPolicyErrors == SslPolicyErrors.None;
@@ -79,7 +79,7 @@ namespace TrinoClient
             IgnoreSslErrorHandler = new HttpClientHandler()
             {
                 CookieContainer = Cookies,
-                AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+                AutomaticDecompression = Configuration.CompressionDisabled ? DecompressionMethods.None : DecompressionMethods.GZip | DecompressionMethods.Deflate,
                 ServerCertificateCustomValidationCallback = (request, cert, chain, sslPolicyErrors) =>
                 {
                     return true;
@@ -686,6 +686,8 @@ namespace TrinoClient
                             return response;
                         }
                     case HttpStatusCode.ServiceUnavailable:
+                    case HttpStatusCode.BadGateway:
+                    case HttpStatusCode.GatewayTimeout:
                         {
                             // Retry with an exponential backoff
                             int Milliseconds = (int)Math.Floor(Math.Pow(2, Counter) * 1000);
