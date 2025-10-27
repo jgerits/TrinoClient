@@ -825,27 +825,14 @@ namespace TrinoClient
             }
 
             // Build final set of prepared statements
-            IDictionary<string, string> PreparedStatements = new Dictionary<string, string>();
-
-            if (Configuration.PreparedStatements != null)
-            {
-                foreach (KeyValuePair<string, string> Item in Configuration.PreparedStatements)
-                {
-                    PreparedStatements.Add(Item);
-                }
-            }
+            Dictionary<string, string> PreparedStatements = Configuration.PreparedStatements != null 
+                ? new Dictionary<string, string>(Configuration.PreparedStatements)
+                : new Dictionary<string, string>();
 
             // Build final set of tags
-            HashSet<string> Tags = [];
-
-            if (Configuration.ClientTags != null)
-            {
-                // Client tags are not allowed to have commas in them and have already been checked in the setter
-                foreach (string Tag in Configuration.ClientTags)
-                {
-                    Tags.Add(Tag);
-                }
-            }
+            HashSet<string> Tags = Configuration.ClientTags != null 
+                ? new HashSet<string>(Configuration.ClientTags)
+                : new HashSet<string>();
 
             if (options != null)
             {
@@ -865,7 +852,7 @@ namespace TrinoClient
                     {
                         if (!PreparedStatements.ContainsKey(Statement.Key))
                         {
-                            PreparedStatements.Add(Statement);
+                            PreparedStatements.Add(Statement.Key, Statement.Value);
                         }
                     }
                 }

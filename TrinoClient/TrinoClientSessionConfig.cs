@@ -77,7 +77,7 @@ namespace TrinoClient
             {
                 if (string.IsNullOrEmpty(value))
                 {
-                    throw new ArgumentNullException("User", "The user name cannot be null or empty.");
+                    throw new ArgumentNullException(nameof(User), "The user name cannot be null or empty.");
                 }
 
                 _User = value;
@@ -157,7 +157,7 @@ namespace TrinoClient
                 {
                     if (string.IsNullOrEmpty(Item.Key))
                     {
-                        throw new ArgumentNullException("Properties", "Session property key name is empty.");
+                        throw new ArgumentNullException(nameof(Properties), "Session property key name is empty.");
                     }
 
                     if (Item.Key.Contains('='))

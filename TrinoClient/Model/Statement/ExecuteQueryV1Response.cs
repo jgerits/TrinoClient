@@ -74,8 +74,9 @@ namespace TrinoClient.Model.Statement
             if (_Responses.Count != 0)
             {
                 // The first response may not have any column data, so find the first
-                // resposne that does and pull the columns from that
-                Columns = _Responses.First(x => x.Columns != null).Columns.ToList();
+                // response that does and pull the columns from that
+                var columns = _Responses.First(x => x.Columns != null).Columns;
+                Columns = columns as IReadOnlyList<Column> ?? columns.ToList();
             }
             else
             {
@@ -130,7 +131,7 @@ namespace TrinoClient.Model.Statement
             }
             else
             {
-                throw new ArgumentNullException("Data", "The data in this query result is null.");
+                throw new ArgumentNullException(nameof(Data), "The data in this query result is null.");
             }
         }
 

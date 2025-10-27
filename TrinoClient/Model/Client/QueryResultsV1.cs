@@ -173,7 +173,7 @@ namespace TrinoClient.Model.Statement
             }
             else
             {
-                throw new ArgumentNullException("Data", "The data in this query result is null.");
+                throw new ArgumentNullException(nameof(Data), "The data in this query result is null.");
             }
         }
 
