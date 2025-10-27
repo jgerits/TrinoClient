@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using TrinoClient.Model.Jmx;
 using TrinoClient.Model.NodeInfo;
@@ -12,7 +13,7 @@ namespace TrinoClient.Interfaces
     /// <summary>
     /// Provides an interface to interact with the Presto REST API
     /// </summary>
-    public interface ITrinoClient
+    public interface ITrinoClient : IDisposable
     {
         #region Threads
 
