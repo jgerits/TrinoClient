@@ -78,7 +78,6 @@ jobs:
           RELEVANT_PATTERNS=(
             "^TrinoClient/.*\.cs$"
             "^TrinoClient/.*\.csproj$"
-            "^TrinoClientTests/.*\.cs$"
           )
           
           for file in $CHANGED_FILES; do
