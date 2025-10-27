@@ -2,15 +2,18 @@
 {
     public static class Hashing
     {
+        private const int HashSeed = 17;
+        private const int HashMultiplier = 23;
+
         // Optimized overloads to avoid params array allocation
         public static int Hash(object arg1)
         {
             unchecked
             {
-                int hash = 17;
+                int hash = HashSeed;
                 if (arg1 != null)
                 {
-                    hash = (hash * 23) + arg1.GetHashCode();
+                    hash = (hash * HashMultiplier) + arg1.GetHashCode();
                 }
                 return hash;
             }
@@ -20,14 +23,14 @@
         {
             unchecked
             {
-                int hash = 17;
+                int hash = HashSeed;
                 if (arg1 != null)
                 {
-                    hash = (hash * 23) + arg1.GetHashCode();
+                    hash = (hash * HashMultiplier) + arg1.GetHashCode();
                 }
                 if (arg2 != null)
                 {
-                    hash = (hash * 23) + arg2.GetHashCode();
+                    hash = (hash * HashMultiplier) + arg2.GetHashCode();
                 }
                 return hash;
             }
@@ -37,18 +40,18 @@
         {
             unchecked
             {
-                int hash = 17;
+                int hash = HashSeed;
                 if (arg1 != null)
                 {
-                    hash = (hash * 23) + arg1.GetHashCode();
+                    hash = (hash * HashMultiplier) + arg1.GetHashCode();
                 }
                 if (arg2 != null)
                 {
-                    hash = (hash * 23) + arg2.GetHashCode();
+                    hash = (hash * HashMultiplier) + arg2.GetHashCode();
                 }
                 if (arg3 != null)
                 {
-                    hash = (hash * 23) + arg3.GetHashCode();
+                    hash = (hash * HashMultiplier) + arg3.GetHashCode();
                 }
                 return hash;
             }
@@ -58,17 +61,17 @@
         {
             unchecked // Overflow is fine, just wrap
             {
-                int Hash = 17;
+                int hash = HashSeed;
 
                 foreach (object Item in args)
                 {
                     if (Item != null)
                     {
-                        Hash = (Hash * 23) + Item.GetHashCode();
+                        hash = (hash * HashMultiplier) + Item.GetHashCode();
                     }
                 }
 
-                return Hash;
+                return hash;
             }
         }
     }
