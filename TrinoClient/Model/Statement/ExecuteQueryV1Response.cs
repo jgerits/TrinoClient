@@ -142,14 +142,17 @@ namespace TrinoClient.Model.Statement
         {
             if (Data != null)
             {
+                // Materialize data once to avoid multiple enumeration
+                var dataList = Data as IList<List<dynamic>> ?? Data.ToList();
+                
                 Dictionary<string, Dictionary<string, object>[]> Wrapper = new()
                 {
-                    { "data", new Dictionary<string, object>[Data.Count()] }
+                    { "data", new Dictionary<string, object>[dataList.Count] }
                 };
 
                 int RowCounter = 0;
 
-                foreach (List<dynamic> Row in Data)
+                foreach (List<dynamic> Row in dataList)
                 {
                     // Keep track of the column number
                     int Counter = 0;

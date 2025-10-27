@@ -181,18 +181,21 @@ namespace TrinoClient
         {
             HttpClient LocalClient = Configuration.IgnoreSslErrors ? IgnoreSslErrorClient : NormalClient;
 
-            StringBuilder SB = new();
+            StringBuilder SB = new(100);
 
             string Scheme = Configuration.UseSsl ? "https" : "http";
-            SB.Append($"{Scheme}://{Configuration.Host}");
+            SB.Append(Scheme);
+            SB.Append("://");
+            SB.Append(Configuration.Host);
 
             // Only add non-standard ports
             if ((Scheme == "http" && Configuration.Port != 80) || (Scheme == "https" && Configuration.Port != 443))
             {
-                SB.Append($":{Configuration.Port}");
+                SB.Append(':');
+                SB.Append(Configuration.Port);
             }
 
-            SB.Append($"/ui/thread");
+            SB.Append("/ui/thread");
 
             Uri Path = new(SB.ToString());
 
@@ -282,18 +285,23 @@ namespace TrinoClient
         {
             HttpClient LocalClient = Configuration.IgnoreSslErrors ? IgnoreSslErrorClient : NormalClient;
 
-            StringBuilder SB = new();
+            StringBuilder SB = new(120);
 
             string Scheme = Configuration.UseSsl ? "https" : "http";
-            SB.Append($"{Scheme}://{Configuration.Host}");
+            SB.Append(Scheme);
+            SB.Append("://");
+            SB.Append(Configuration.Host);
 
             // Only add non-standard ports
             if ((Scheme == "http" && Configuration.Port != 80) || (Scheme == "https" && Configuration.Port != 443))
             {
-                SB.Append($":{Configuration.Port}");
+                SB.Append(':');
+                SB.Append(Configuration.Port);
             }
 
-            SB.Append($"/{GetVersionString(Configuration.Version)}/node/failed");
+            SB.Append('/');
+            SB.Append(GetVersionString(Configuration.Version));
+            SB.Append("/node/failed");
 
             Uri Path = new(SB.ToString());
 
@@ -709,27 +717,32 @@ namespace TrinoClient
                 throw new ArgumentNullException(nameof(relativePath), "The relative path in the url being constructed cannot be null or empty.");
             }
 
-            StringBuilder SB = new();
+            // Estimate capacity: scheme(8) + host(50) + port(6) + version(4) + path(50) = ~120
+            StringBuilder SB = new(120);
 
             string Scheme = Configuration.UseSsl ? "https" : "http";
-            SB.Append($"{Scheme}://{Configuration.Host}");
+            SB.Append(Scheme);
+            SB.Append("://");
+            SB.Append(Configuration.Host);
 
             // Only add non-standard ports
             if ((Scheme == "http" && Configuration.Port != 80) || (Scheme == "https" && Configuration.Port != 443))
             {
-                SB.Append($":{Configuration.Port}");
+                SB.Append(':');
+                SB.Append(Configuration.Port);
             }
+
+            SB.Append('/');
+            SB.Append(GetVersionString(version));
 
             if (!relativePath.StartsWith('/'))
             {
-                relativePath = $"/{relativePath}";
+                SB.Append('/');
             }
+            
+            SB.Append(relativePath);
 
-            SB.Append($"/{GetVersionString(version)}{relativePath}");
-
-            Uri Path = new(SB.ToString());
-
-            return Path;
+            return new Uri(SB.ToString());
         }
 
         /// <summary>
