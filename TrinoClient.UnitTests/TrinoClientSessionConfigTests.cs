@@ -268,5 +268,72 @@ namespace TrinoClient.UnitTests
             Assert.True(config.Debug);
             Assert.Equal(300, config.ClientRequestTimeout);
         }
+
+        [Fact]
+        public void Constructor_Default_SetsConnectionPoolingDefaults()
+        {
+            // Arrange & Act
+            var config = new TrinoClientSessionConfig();
+
+            // Assert
+            Assert.Equal(TimeSpan.FromMinutes(10), config.PooledConnectionLifetime);
+            Assert.Equal(TimeSpan.FromMinutes(2), config.PooledConnectionIdleTimeout);
+            Assert.Equal(10, config.MaxConnectionsPerServer);
+            Assert.False(config.CompressionDisabled);
+        }
+
+        [Fact]
+        public void PooledConnectionLifetime_CustomValue_SetsValue()
+        {
+            // Arrange
+            var config = new TrinoClientSessionConfig();
+            var customLifetime = TimeSpan.FromMinutes(15);
+
+            // Act
+            config.PooledConnectionLifetime = customLifetime;
+
+            // Assert
+            Assert.Equal(customLifetime, config.PooledConnectionLifetime);
+        }
+
+        [Fact]
+        public void PooledConnectionIdleTimeout_CustomValue_SetsValue()
+        {
+            // Arrange
+            var config = new TrinoClientSessionConfig();
+            var customTimeout = TimeSpan.FromMinutes(5);
+
+            // Act
+            config.PooledConnectionIdleTimeout = customTimeout;
+
+            // Assert
+            Assert.Equal(customTimeout, config.PooledConnectionIdleTimeout);
+        }
+
+        [Fact]
+        public void MaxConnectionsPerServer_CustomValue_SetsValue()
+        {
+            // Arrange
+            var config = new TrinoClientSessionConfig();
+
+            // Act
+            config.MaxConnectionsPerServer = 20;
+
+            // Assert
+            Assert.Equal(20, config.MaxConnectionsPerServer);
+        }
+
+        [Fact]
+        public void CompressionDisabled_True_DisablesCompression()
+        {
+            // Arrange
+            var config = new TrinoClientSessionConfig();
+
+            // Act
+            config.CompressionDisabled = true;
+
+            // Assert
+            Assert.True(config.CompressionDisabled);
+        }
     }
 }
