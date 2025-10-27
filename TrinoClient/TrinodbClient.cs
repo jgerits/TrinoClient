@@ -947,10 +947,9 @@ namespace TrinoClient
                 if (disposing)
                 {
                     // Dispose managed resources
+                    // HttpClient.Dispose() handles disposal of its associated handler
                     NormalClient?.Dispose();
                     IgnoreSslErrorClient?.Dispose();
-                    NormalHandler?.Dispose();
-                    IgnoreSslErrorHandler?.Dispose();
                 }
 
                 _disposed = true;
@@ -963,7 +962,6 @@ namespace TrinoClient
         public void Dispose()
         {
             Dispose(true);
-            GC.SuppressFinalize(this);
         }
 
         #endregion
