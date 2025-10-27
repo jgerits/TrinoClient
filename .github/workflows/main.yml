@@ -71,7 +71,7 @@ jobs:
       - name: Check for relevant changes
         id: check_changes
         run: |
-          CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD || echo "")
+          CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "")
           echo "Changed files: $CHANGED_FILES"
           
           RELEVANT_CHANGE=false
@@ -151,8 +151,9 @@ jobs:
           VERSION="${{ steps.meta.outputs.version }}"
           LOWER_ID=$(echo "$PACKAGE_ID" | tr '[:upper:]' '[:lower:]')
 
-          STATUS=$(curl -s -o /tmp/index.json -w "%{http_code}" "https://api.nuget.org/v3-flatcontainer/$LOWER_ID/index.json" || echo "000")
-          if [ "$STATUS" = "200" ] && grep -q "\"$VERSION\"" /tmp/index.json; then
+          STATUS=$(curl -s -o /tmp/index.json -w "%{http_code}" "https://api.nuget.org/v3-flatcontainer/$LOWER_ID/index.json" 2>&1 || echo "000")
+          echo "NuGet API returned status: $STATUS"
+          if [ "$STATUS" = "200" ] && grep -q "\"$VERSION\"" /tmp/index.json 2>/dev/null; then
             echo "exists=true" >> $GITHUB_OUTPUT
             echo "NuGet package $PACKAGE_ID version $VERSION exists."
           else
