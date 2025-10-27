@@ -147,15 +147,26 @@ namespace TrinoClient.Model.Statement
             {
                 foreach (var Item in Data)
                 {
-                    StringBuilder SB = new();
-
-                    foreach (var Column in Item)
+                    if (Item == null || Item.Count == 0)
                     {
-                        SB.Append($"\"{Column}\",");
+                        yield return string.Empty;
+                        continue;
                     }
 
-                    // Remove last comma
-                    SB.Length--;
+                    // Estimate capacity: average 20 chars per column + quotes and comma
+                    StringBuilder SB = new(Item.Count * 25);
+
+                    for (int i = 0; i < Item.Count; i++)
+                    {
+                        SB.Append('"');
+                        SB.Append(Item[i]);
+                        SB.Append('"');
+                        
+                        if (i < Item.Count - 1)
+                        {
+                            SB.Append(',');
+                        }
+                    }
 
                     yield return SB.ToString();
                 }

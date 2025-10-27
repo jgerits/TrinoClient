@@ -32,6 +32,11 @@ namespace TrinoClient
         private static readonly string AssemblyVersion = Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
 
         /// <summary>
+        /// Shared Random instance for jitter in retry logic
+        /// </summary>
+        private static readonly Random SharedRandom = new();
+
+        /// <summary>
         /// The cookie container all of the handlers will use so they all have access to the same cookies
         /// </summary>
         private CookieContainer Cookies = new();
@@ -146,7 +151,7 @@ namespace TrinoClient
 
             if (Response.StatusCode != HttpStatusCode.OK)
             {
-                throw new TrinoWebException(await Response.Content.ReadAsStringAsync(cancellationToken), Response.StatusCode);
+                throw new TrinoWebException(Json, Response.StatusCode);
             }
             else
             {
@@ -197,7 +202,7 @@ namespace TrinoClient
 
             if (Response.StatusCode != HttpStatusCode.OK)
             {
-                throw new TrinoWebException(await Response.Content.ReadAsStringAsync(cancellationToken), Response.StatusCode);
+                throw new TrinoWebException(Html, Response.StatusCode);
             }
             else
             {
@@ -243,7 +248,7 @@ namespace TrinoClient
 
             if (Response.StatusCode != HttpStatusCode.OK)
             {
-                throw new TrinoWebException(await Response.Content.ReadAsStringAsync(cancellationToken), Response.StatusCode);
+                throw new TrinoWebException(Json, Response.StatusCode);
             }
             else
             {
@@ -298,7 +303,7 @@ namespace TrinoClient
 
             if (Response.StatusCode != HttpStatusCode.OK)
             {
-                throw new TrinoWebException(await Response.Content.ReadAsStringAsync(cancellationToken), Response.StatusCode);
+                throw new TrinoWebException(Json, Response.StatusCode);
             }
             else
             {
@@ -371,14 +376,16 @@ namespace TrinoClient
 
             HttpResponseMessage Response = await LocalClient.SendAsync(Request, cancellationToken);
 
+            string content = await Response.Content.ReadAsStringAsync(cancellationToken);
+
             // Expect a 200 response
             if (Response.StatusCode != HttpStatusCode.OK)
             {
-                throw new TrinoWebException(await Response.Content.ReadAsStringAsync(cancellationToken), Response.StatusCode);
+                throw new TrinoWebException(content, Response.StatusCode);
             }
             else
             {
-                ListQueriesV1Response Results = new(await Response.Content.ReadAsStringAsync(cancellationToken));
+                ListQueriesV1Response Results = new(content);
                 return Results;
             }
         }
@@ -409,14 +416,16 @@ namespace TrinoClient
 
             HttpResponseMessage Response = await LocalClient.GetAsync(Path, CancellationToken);
 
+            string content = await Response.Content.ReadAsStringAsync(CancellationToken);
+
             // Expect a 200 response
             if (Response.StatusCode != HttpStatusCode.OK)
             {
-                throw new TrinoWebException(await Response.Content.ReadAsStringAsync(CancellationToken), Response.StatusCode);
+                throw new TrinoWebException(content, Response.StatusCode);
             }
             else
             {
-                GetQueryV1Response Result = new(await Response.Content.ReadAsStringAsync(CancellationToken));
+                GetQueryV1Response Result = new(content);
                 return Result;
             }
         }
@@ -600,14 +609,16 @@ namespace TrinoClient
             // Submit the request for details on the requested object name
             HttpResponseMessage Response = await MakeHttpRequest(Request, cancellationToken);
 
+            string content = await Response.Content.ReadAsStringAsync(cancellationToken);
+
             if (Response.StatusCode != HttpStatusCode.OK)
             {
-                throw new TrinoWebException(await Response.Content.ReadAsStringAsync(cancellationToken), Response.StatusCode);
+                throw new TrinoWebException(content, Response.StatusCode);
             }
             else
             {
                 // Generate a new query response object
-                return new JmxMbeanV1Response(await Response.Content.ReadAsStringAsync(cancellationToken));
+                return new JmxMbeanV1Response(content);
             }
         }
 
@@ -662,7 +673,12 @@ namespace TrinoClient
                         {
                             // Retry with an exponential backoff
                             int Milliseconds = (int)Math.Floor(Math.Pow(2, Counter) * 1000);
-                            Milliseconds += new Random().Next(0, 1000);
+                            int jitter;
+                            lock (SharedRandom)
+                            {
+                                jitter = SharedRandom.Next(0, 1000);
+                            }
+                            Milliseconds += jitter;
                             await Task.Delay(Milliseconds, cancellationToken);
 
                             Counter++;
