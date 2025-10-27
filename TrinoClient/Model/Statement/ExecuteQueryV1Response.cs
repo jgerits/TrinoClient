@@ -74,8 +74,9 @@ namespace TrinoClient.Model.Statement
             if (_Responses.Count != 0)
             {
                 // The first response may not have any column data, so find the first
-                // resposne that does and pull the columns from that
-                Columns = _Responses.First(x => x.Columns != null).Columns.ToList();
+                // response that does and pull the columns from that
+                var columns = _Responses.First(x => x.Columns != null).Columns;
+                Columns = columns as IReadOnlyList<Column> ?? columns.ToList();
             }
             else
             {
@@ -104,22 +105,33 @@ namespace TrinoClient.Model.Statement
             {
                 foreach (var Item in Data)
                 {
-                    StringBuilder SB = new();
-
-                    foreach (var Column in Item)
+                    if (Item == null || Item.Count == 0)
                     {
-                        SB.Append($"\"{Column}\",");
+                        yield return string.Empty;
+                        continue;
                     }
 
-                    // Remove last comma
-                    SB.Length--;
+                    // Estimate capacity: average 20 chars per column + quotes and comma
+                    StringBuilder SB = new(Item.Count * 25);
+
+                    for (int i = 0; i < Item.Count; i++)
+                    {
+                        SB.Append('"');
+                        SB.Append(Item[i]);
+                        SB.Append('"');
+                        
+                        if (i < Item.Count - 1)
+                        {
+                            SB.Append(',');
+                        }
+                    }
 
                     yield return SB.ToString();
                 }
             }
             else
             {
-                throw new ArgumentNullException("Data", "The data in this query result is null.");
+                throw new ArgumentNullException(nameof(Data), "The data in this query result is null.");
             }
         }
 
@@ -131,14 +143,17 @@ namespace TrinoClient.Model.Statement
         {
             if (Data != null)
             {
+                // Materialize data once to avoid multiple enumeration
+                var dataList = Data as IList<List<dynamic>> ?? Data.ToList();
+                
                 Dictionary<string, Dictionary<string, object>[]> Wrapper = new()
                 {
-                    { "data", new Dictionary<string, object>[Data.Count()] }
+                    { "data", new Dictionary<string, object>[dataList.Count] }
                 };
 
                 int RowCounter = 0;
 
-                foreach (List<dynamic> Row in Data)
+                foreach (List<dynamic> Row in dataList)
                 {
                     // Keep track of the column number
                     int Counter = 0;

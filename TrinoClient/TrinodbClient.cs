@@ -32,6 +32,11 @@ namespace TrinoClient
         private static readonly string AssemblyVersion = Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
 
         /// <summary>
+        /// Shared Random instance for jitter in retry logic
+        /// </summary>
+        private static readonly Random SharedRandom = new();
+
+        /// <summary>
         /// The cookie container all of the handlers will use so they all have access to the same cookies
         /// </summary>
         private CookieContainer Cookies = new();
@@ -146,7 +151,7 @@ namespace TrinoClient
 
             if (Response.StatusCode != HttpStatusCode.OK)
             {
-                throw new TrinoWebException(await Response.Content.ReadAsStringAsync(cancellationToken), Response.StatusCode);
+                throw new TrinoWebException(Json, Response.StatusCode);
             }
             else
             {
@@ -176,18 +181,21 @@ namespace TrinoClient
         {
             HttpClient LocalClient = Configuration.IgnoreSslErrors ? IgnoreSslErrorClient : NormalClient;
 
-            StringBuilder SB = new();
+            StringBuilder SB = new(100);
 
             string Scheme = Configuration.UseSsl ? "https" : "http";
-            SB.Append($"{Scheme}://{Configuration.Host}");
+            SB.Append(Scheme);
+            SB.Append("://");
+            SB.Append(Configuration.Host);
 
             // Only add non-standard ports
             if ((Scheme == "http" && Configuration.Port != 80) || (Scheme == "https" && Configuration.Port != 443))
             {
-                SB.Append($":{Configuration.Port}");
+                SB.Append(':');
+                SB.Append(Configuration.Port);
             }
 
-            SB.Append($"/ui/thread");
+            SB.Append("/ui/thread");
 
             Uri Path = new(SB.ToString());
 
@@ -197,7 +205,7 @@ namespace TrinoClient
 
             if (Response.StatusCode != HttpStatusCode.OK)
             {
-                throw new TrinoWebException(await Response.Content.ReadAsStringAsync(cancellationToken), Response.StatusCode);
+                throw new TrinoWebException(Html, Response.StatusCode);
             }
             else
             {
@@ -243,7 +251,7 @@ namespace TrinoClient
 
             if (Response.StatusCode != HttpStatusCode.OK)
             {
-                throw new TrinoWebException(await Response.Content.ReadAsStringAsync(cancellationToken), Response.StatusCode);
+                throw new TrinoWebException(Json, Response.StatusCode);
             }
             else
             {
@@ -277,18 +285,23 @@ namespace TrinoClient
         {
             HttpClient LocalClient = Configuration.IgnoreSslErrors ? IgnoreSslErrorClient : NormalClient;
 
-            StringBuilder SB = new();
+            StringBuilder SB = new(120);
 
             string Scheme = Configuration.UseSsl ? "https" : "http";
-            SB.Append($"{Scheme}://{Configuration.Host}");
+            SB.Append(Scheme);
+            SB.Append("://");
+            SB.Append(Configuration.Host);
 
             // Only add non-standard ports
             if ((Scheme == "http" && Configuration.Port != 80) || (Scheme == "https" && Configuration.Port != 443))
             {
-                SB.Append($":{Configuration.Port}");
+                SB.Append(':');
+                SB.Append(Configuration.Port);
             }
 
-            SB.Append($"/{GetVersionString(Configuration.Version)}/node/failed");
+            SB.Append('/');
+            SB.Append(GetVersionString(Configuration.Version));
+            SB.Append("/node/failed");
 
             Uri Path = new(SB.ToString());
 
@@ -298,7 +311,7 @@ namespace TrinoClient
 
             if (Response.StatusCode != HttpStatusCode.OK)
             {
-                throw new TrinoWebException(await Response.Content.ReadAsStringAsync(cancellationToken), Response.StatusCode);
+                throw new TrinoWebException(Json, Response.StatusCode);
             }
             else
             {
@@ -371,14 +384,16 @@ namespace TrinoClient
 
             HttpResponseMessage Response = await LocalClient.SendAsync(Request, cancellationToken);
 
+            string content = await Response.Content.ReadAsStringAsync(cancellationToken);
+
             // Expect a 200 response
             if (Response.StatusCode != HttpStatusCode.OK)
             {
-                throw new TrinoWebException(await Response.Content.ReadAsStringAsync(cancellationToken), Response.StatusCode);
+                throw new TrinoWebException(content, Response.StatusCode);
             }
             else
             {
-                ListQueriesV1Response Results = new(await Response.Content.ReadAsStringAsync(cancellationToken));
+                ListQueriesV1Response Results = new(content);
                 return Results;
             }
         }
@@ -409,14 +424,16 @@ namespace TrinoClient
 
             HttpResponseMessage Response = await LocalClient.GetAsync(Path, CancellationToken);
 
+            string content = await Response.Content.ReadAsStringAsync(CancellationToken);
+
             // Expect a 200 response
             if (Response.StatusCode != HttpStatusCode.OK)
             {
-                throw new TrinoWebException(await Response.Content.ReadAsStringAsync(CancellationToken), Response.StatusCode);
+                throw new TrinoWebException(content, Response.StatusCode);
             }
             else
             {
-                GetQueryV1Response Result = new(await Response.Content.ReadAsStringAsync(CancellationToken));
+                GetQueryV1Response Result = new(content);
                 return Result;
             }
         }
@@ -600,14 +617,16 @@ namespace TrinoClient
             // Submit the request for details on the requested object name
             HttpResponseMessage Response = await MakeHttpRequest(Request, cancellationToken);
 
+            string content = await Response.Content.ReadAsStringAsync(cancellationToken);
+
             if (Response.StatusCode != HttpStatusCode.OK)
             {
-                throw new TrinoWebException(await Response.Content.ReadAsStringAsync(cancellationToken), Response.StatusCode);
+                throw new TrinoWebException(content, Response.StatusCode);
             }
             else
             {
                 // Generate a new query response object
-                return new JmxMbeanV1Response(await Response.Content.ReadAsStringAsync(cancellationToken));
+                return new JmxMbeanV1Response(content);
             }
         }
 
@@ -662,7 +681,12 @@ namespace TrinoClient
                         {
                             // Retry with an exponential backoff
                             int Milliseconds = (int)Math.Floor(Math.Pow(2, Counter) * 1000);
-                            Milliseconds += new Random().Next(0, 1000);
+                            int jitter;
+                            lock (SharedRandom)
+                            {
+                                jitter = SharedRandom.Next(0, 1000);
+                            }
+                            Milliseconds += jitter;
                             await Task.Delay(Milliseconds, cancellationToken);
 
                             Counter++;
@@ -693,27 +717,32 @@ namespace TrinoClient
                 throw new ArgumentNullException(nameof(relativePath), "The relative path in the url being constructed cannot be null or empty.");
             }
 
-            StringBuilder SB = new();
+            // Estimate capacity: scheme(8) + host(50) + port(6) + version(4) + path(50) = ~120
+            StringBuilder SB = new(120);
 
             string Scheme = Configuration.UseSsl ? "https" : "http";
-            SB.Append($"{Scheme}://{Configuration.Host}");
+            SB.Append(Scheme);
+            SB.Append("://");
+            SB.Append(Configuration.Host);
 
             // Only add non-standard ports
             if ((Scheme == "http" && Configuration.Port != 80) || (Scheme == "https" && Configuration.Port != 443))
             {
-                SB.Append($":{Configuration.Port}");
+                SB.Append(':');
+                SB.Append(Configuration.Port);
             }
+
+            SB.Append('/');
+            SB.Append(GetVersionString(version));
 
             if (!relativePath.StartsWith('/'))
             {
-                relativePath = $"/{relativePath}";
+                SB.Append('/');
             }
+            
+            SB.Append(relativePath);
 
-            SB.Append($"/{GetVersionString(version)}{relativePath}");
-
-            Uri Path = new(SB.ToString());
-
-            return Path;
+            return new Uri(SB.ToString());
         }
 
         /// <summary>
@@ -796,27 +825,14 @@ namespace TrinoClient
             }
 
             // Build final set of prepared statements
-            IDictionary<string, string> PreparedStatements = new Dictionary<string, string>();
-
-            if (Configuration.PreparedStatements != null)
-            {
-                foreach (KeyValuePair<string, string> Item in Configuration.PreparedStatements)
-                {
-                    PreparedStatements.Add(Item);
-                }
-            }
+            Dictionary<string, string> PreparedStatements = Configuration.PreparedStatements != null 
+                ? new Dictionary<string, string>(Configuration.PreparedStatements)
+                : new Dictionary<string, string>();
 
             // Build final set of tags
-            HashSet<string> Tags = [];
-
-            if (Configuration.ClientTags != null)
-            {
-                // Client tags are not allowed to have commas in them and have already been checked in the setter
-                foreach (string Tag in Configuration.ClientTags)
-                {
-                    Tags.Add(Tag);
-                }
-            }
+            HashSet<string> Tags = Configuration.ClientTags != null 
+                ? new HashSet<string>(Configuration.ClientTags)
+                : new HashSet<string>();
 
             if (options != null)
             {
@@ -836,7 +852,7 @@ namespace TrinoClient
                     {
                         if (!PreparedStatements.ContainsKey(Statement.Key))
                         {
-                            PreparedStatements.Add(Statement);
+                            PreparedStatements.Add(Statement.Key, Statement.Value);
                         }
                     }
                 }

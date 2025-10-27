@@ -77,7 +77,7 @@ namespace TrinoClient
             {
                 if (string.IsNullOrEmpty(value))
                 {
-                    throw new ArgumentNullException("User", "The user name cannot be null or empty.");
+                    throw new ArgumentNullException(nameof(User), "The user name cannot be null or empty.");
                 }
 
                 _User = value;
@@ -157,24 +157,24 @@ namespace TrinoClient
                 {
                     if (string.IsNullOrEmpty(Item.Key))
                     {
-                        throw new ArgumentNullException("Properties", "Session property key name is empty.");
+                        throw new ArgumentNullException(nameof(Properties), "Session property key name is empty.");
                     }
 
-                    if (Item.Key.Contains("="))
+                    if (Item.Key.Contains('='))
                     {
                         throw new FormatException($"Session property name must not contain '=' : {Item.Key}");
                     }
 
                     string AsciiKey = Encoding.ASCII.GetString(Encoding.ASCII.GetBytes(Item.Key));
 
-                    if (!AsciiKey.Equals(Item.Key))
+                    if (!AsciiKey.Equals(Item.Key, StringComparison.Ordinal))
                     {
                         throw new FormatException($"Session property name contains non US_ASCII characters: {Item.Key}");
                     }
 
                     string AsciiValue = Encoding.ASCII.GetString(Encoding.ASCII.GetBytes(Item.Value));
 
-                    if (!AsciiValue.Equals(Item.Value))
+                    if (!AsciiValue.Equals(Item.Value, StringComparison.Ordinal))
                     {
                         throw new FormatException($"Session property value contains non US_ASCII characters: {Item.Value}");
                     }
