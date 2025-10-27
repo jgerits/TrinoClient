@@ -947,6 +947,7 @@ namespace TrinoClient
                 if (disposing)
                 {
                     // Dispose managed resources
+                    // Dispose clients first, then handlers
                     // Since we pass handlers to HttpClient constructors, HttpClient doesn't own them
                     // and won't dispose them, so we must dispose them explicitly
                     NormalClient?.Dispose();
