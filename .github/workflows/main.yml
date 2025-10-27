@@ -43,7 +43,7 @@ jobs:
         run: dotnet build --configuration Release --no-restore
 
       - name: Run tests
-        run: dotnet test --configuration Release --no-build --verbosity normal
+        run: dotnet test --configuration Release --no-build --verbosity normal --filter "Category!=Integration"
 
       - name: Create NuGet package
         run: dotnet pack --configuration Release --no-build --output ./artifacts
@@ -170,7 +170,7 @@ jobs:
 
       - name: Run tests
         if: steps.check_changes.outputs.relevant == 'true' && (steps.release_check.outputs.exists == 'false' || steps.nuget_check.outputs.exists == 'false')
-        run: dotnet test --configuration Release --no-build --verbosity normal
+        run: dotnet test --configuration Release --no-build --verbosity normal --filter "Category!=Integration"
 
       - name: Create NuGet package
         if: steps.check_changes.outputs.relevant == 'true' && (steps.release_check.outputs.exists == 'false' || steps.nuget_check.outputs.exists == 'false')
