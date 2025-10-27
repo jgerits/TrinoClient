@@ -64,8 +64,8 @@ namespace TrinoClient.UnitTests
         {
             // Arrange
             var code = 0;
-            var name = "SUCCESS";
-            var type = ErrorType.NONE;
+            var name = "GENERIC_ERROR";
+            var type = ErrorType.INTERNAL_ERROR;
 
             // Act
             var errorCode = new ErrorCode(code, name, type);

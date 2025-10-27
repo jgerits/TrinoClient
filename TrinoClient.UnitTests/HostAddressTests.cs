@@ -84,7 +84,7 @@ namespace TrinoClient.UnitTests
         public void FromString_PortTooHigh_ThrowsException()
         {
             // Arrange
-            var hostPortString = "localhost:99999";
+            var hostPortString = "localhost:65536";
 
             // Act & Assert
             Assert.Throws<ArgumentException>(() => HostAddress.FromString(hostPortString));
