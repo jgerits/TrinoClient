@@ -69,6 +69,7 @@ namespace TrinoClient
             NormalHandler = new HttpClientHandler()
             {
                 CookieContainer = Cookies,
+                AutomaticDecompression = Configuration.CompressionDisabled ? DecompressionMethods.None : DecompressionMethods.GZip | DecompressionMethods.Deflate,
                 ServerCertificateCustomValidationCallback = (request, cert, chain, sslPolicyErrors) =>
                 {
                     return sslPolicyErrors == SslPolicyErrors.None;
@@ -78,14 +79,21 @@ namespace TrinoClient
             IgnoreSslErrorHandler = new HttpClientHandler()
             {
                 CookieContainer = Cookies,
+                AutomaticDecompression = Configuration.CompressionDisabled ? DecompressionMethods.None : DecompressionMethods.GZip | DecompressionMethods.Deflate,
                 ServerCertificateCustomValidationCallback = (request, cert, chain, sslPolicyErrors) =>
                 {
                     return true;
                 }
             };
 
-            NormalClient = new HttpClient(NormalHandler);
-            IgnoreSslErrorClient = new HttpClient(IgnoreSslErrorHandler);
+            NormalClient = new HttpClient(NormalHandler)
+            {
+                Timeout = TimeSpan.FromMinutes(5)
+            };
+            IgnoreSslErrorClient = new HttpClient(IgnoreSslErrorHandler)
+            {
+                Timeout = TimeSpan.FromMinutes(5)
+            };
         }
 
         #endregion
@@ -127,7 +135,7 @@ namespace TrinoClient
         /// </returns>
         public async Task<ListThreadsV1Response> ListThreads()
         {
-            return await ListThreads(CancellationToken.None);
+            return await ListThreads(CancellationToken.None).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -145,9 +153,9 @@ namespace TrinoClient
 
             HttpRequestMessage Request = BuildRequest(Path, HttpMethod.Get);
 
-            HttpResponseMessage Response = await LocalClient.SendAsync(Request, cancellationToken);
+            HttpResponseMessage Response = await LocalClient.SendAsync(Request, cancellationToken).ConfigureAwait(false);
 
-            string Json = await Response.Content.ReadAsStringAsync(cancellationToken);
+            string Json = await Response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
 
             if (Response.StatusCode != HttpStatusCode.OK)
             {
@@ -168,7 +176,7 @@ namespace TrinoClient
         /// <returns>The web page html/javascript/css.</returns>
         public async Task<string> GetThreadUIHtml()
         {
-            return await GetThreadUIHtml(CancellationToken.None);
+            return await GetThreadUIHtml(CancellationToken.None).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -199,9 +207,9 @@ namespace TrinoClient
 
             Uri Path = new(SB.ToString());
 
-            HttpResponseMessage Response = await LocalClient.GetAsync(Path, cancellationToken);
+            HttpResponseMessage Response = await LocalClient.GetAsync(Path, cancellationToken).ConfigureAwait(false);
 
-            string Html = await Response.Content.ReadAsStringAsync(cancellationToken);
+            string Html = await Response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
 
             if (Response.StatusCode != HttpStatusCode.OK)
             {
@@ -226,7 +234,7 @@ namespace TrinoClient
         /// </returns>
         public async Task<ListNodesV1Response> ListNodes()
         {
-            return await ListNodes(CancellationToken.None);
+            return await ListNodes(CancellationToken.None).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -245,9 +253,9 @@ namespace TrinoClient
 
             HttpRequestMessage Request = BuildRequest(Path, HttpMethod.Get);
 
-            HttpResponseMessage Response = await LocalClient.SendAsync(Request, cancellationToken);
+            HttpResponseMessage Response = await LocalClient.SendAsync(Request, cancellationToken).ConfigureAwait(false);
 
-            string Json = await Response.Content.ReadAsStringAsync(cancellationToken);
+            string Json = await Response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
 
             if (Response.StatusCode != HttpStatusCode.OK)
             {
@@ -270,7 +278,7 @@ namespace TrinoClient
         /// </returns>
         public async Task<ListFailedNodesV1Response> ListFailedNodes()
         {
-            return await ListFailedNodes(CancellationToken.None);
+            return await ListFailedNodes(CancellationToken.None).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -305,9 +313,9 @@ namespace TrinoClient
 
             Uri Path = new(SB.ToString());
 
-            HttpResponseMessage Response = await LocalClient.GetAsync(Path, cancellationToken);
+            HttpResponseMessage Response = await LocalClient.GetAsync(Path, cancellationToken).ConfigureAwait(false);
 
-            string Json = await Response.Content.ReadAsStringAsync(cancellationToken);
+            string Json = await Response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
 
             if (Response.StatusCode != HttpStatusCode.OK)
             {
@@ -332,7 +340,7 @@ namespace TrinoClient
         /// <returns>No value is returned, but the method will throw an exception if it was not successful</returns>
         public async Task KillQuery(string queryId)
         {
-            await KillQuery(queryId, CancellationToken.None);
+            await KillQuery(queryId, CancellationToken.None).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -349,12 +357,12 @@ namespace TrinoClient
 
             HttpRequestMessage Request = BuildRequest(Path, HttpMethod.Delete);
 
-            HttpResponseMessage Response = await localClient.SendAsync(Request, cancellationToken);
+            HttpResponseMessage Response = await localClient.SendAsync(Request, cancellationToken).ConfigureAwait(false);
 
             // Expect a 204 response
             if (Response.StatusCode != HttpStatusCode.NoContent)
             {
-                throw new TrinoWebException(await Response.Content.ReadAsStringAsync(cancellationToken), Response.StatusCode);
+                throw new TrinoWebException(await Response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false), Response.StatusCode);
             }
         }
 
@@ -365,7 +373,7 @@ namespace TrinoClient
         /// <returns>Details on the queries</returns>
         public async Task<ListQueriesV1Response> GetQueries()
         {
-            return await GetQueries(CancellationToken.None);
+            return await GetQueries(CancellationToken.None).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -382,9 +390,9 @@ namespace TrinoClient
 
             HttpRequestMessage Request = BuildRequest(Path, HttpMethod.Get);
 
-            HttpResponseMessage Response = await LocalClient.SendAsync(Request, cancellationToken);
+            HttpResponseMessage Response = await LocalClient.SendAsync(Request, cancellationToken).ConfigureAwait(false);
 
-            string content = await Response.Content.ReadAsStringAsync(cancellationToken);
+            string content = await Response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
 
             // Expect a 200 response
             if (Response.StatusCode != HttpStatusCode.OK)
@@ -405,7 +413,7 @@ namespace TrinoClient
         /// <returns>Detailed summary of the query</returns>
         public async Task<GetQueryV1Response> GetQuery(string queryId)
         {
-            return await GetQuery(queryId, CancellationToken.None);
+            return await GetQuery(queryId, CancellationToken.None).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -422,9 +430,9 @@ namespace TrinoClient
 
             HttpRequestMessage Request = BuildRequest(Path, HttpMethod.Get);
 
-            HttpResponseMessage Response = await LocalClient.GetAsync(Path, CancellationToken);
+            HttpResponseMessage Response = await LocalClient.GetAsync(Path, CancellationToken).ConfigureAwait(false);
 
-            string content = await Response.Content.ReadAsStringAsync(CancellationToken);
+            string content = await Response.Content.ReadAsStringAsync(CancellationToken).ConfigureAwait(false);
 
             // Expect a 200 response
             if (Response.StatusCode != HttpStatusCode.OK)
@@ -445,7 +453,7 @@ namespace TrinoClient
         /// <returns>Detailed summary of the query</returns>
         public async Task<GetQueryV1Response> GetQuery(QueryId queryId)
         {
-            return await GetQuery(queryId, CancellationToken.None);
+            return await GetQuery(queryId, CancellationToken.None).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -456,7 +464,7 @@ namespace TrinoClient
         /// <returns>Detailed summary of the query</returns>
         public async Task<GetQueryV1Response> GetQuery(QueryId queryId, CancellationToken cancellationToken)
         {
-            return await GetQuery(queryId.ToString(), cancellationToken);
+            return await GetQuery(queryId.ToString(), cancellationToken).ConfigureAwait(false);
         }
 
         #endregion
@@ -471,7 +479,7 @@ namespace TrinoClient
         /// <returns>The resulting response object from the query.</returns>
         public virtual async Task<ExecuteQueryV1Response> ExecuteQueryV1(ExecuteQueryV1Request request)
         {
-            return await ExecuteQueryV1(request, CancellationToken.None);
+            return await ExecuteQueryV1(request, CancellationToken.None).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -512,12 +520,12 @@ namespace TrinoClient
             }
 
             // This is the original submission result, will contain the nextUri property to follow in order to get the results
-            var responseMessage = await MakeHttpRequest(localClient, httpRequest, cancellationToken: cancellationToken);
+            var responseMessage = await MakeHttpRequest(localClient, httpRequest, cancellationToken: cancellationToken).ConfigureAwait(false);
 
             // This doesn't really do anything but evaluate the headers right now
             ProcessResponseHeaders(responseMessage);
 
-            var content = await responseMessage.Content.ReadAsStringAsync(cancellationToken);
+            var content = await responseMessage.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
 
             // If parsing the submission response fails, return and exit
             if (!QueryResultsV1.TryParse(content, out var response, out var parseEx))
@@ -537,10 +545,10 @@ namespace TrinoClient
             var lastUri = path;
 
             // Recursively fetch results from the next URI
-            await FetchNextResults(localClient, response.NextUri, results, cancellationToken, stopwatch);
+            await FetchNextResults(localClient, response.NextUri, results, cancellationToken, stopwatch).ConfigureAwait(false);
 
             // Explicitly closes the query
-            responseMessage = await localClient.SendAsync(new HttpRequestMessage(HttpMethod.Delete, lastUri), cancellationToken);
+            responseMessage = await localClient.SendAsync(new HttpRequestMessage(HttpMethod.Delete, lastUri), cancellationToken).ConfigureAwait(false);
 
             // If a 204 is not returned, the query was not successfully closed
             var closed = responseMessage.StatusCode == HttpStatusCode.NoContent;
@@ -558,11 +566,11 @@ namespace TrinoClient
             // the MakeRequest method will throw an exception
             var request = BuildRequest(nextUri, HttpMethod.Get);
 
-            var responseMessage = await MakeHttpRequest(localClient, request, cancellationToken: cancellationToken);
+            var responseMessage = await MakeHttpRequest(localClient, request, cancellationToken: cancellationToken).ConfigureAwait(false);
 
             ProcessResponseHeaders(responseMessage);
 
-            var content = await responseMessage.Content.ReadAsStringAsync(cancellationToken);
+            var content = await responseMessage.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
 
             // Make sure deserialization succeeded
             if (QueryResultsV1.TryParse(content, out var response, out var parseEx))
@@ -576,7 +584,7 @@ namespace TrinoClient
             }
 
             // Recursively fetch results from the next URI
-            await FetchNextResults(localClient, response.NextUri, results, cancellationToken, stopwatch);
+            await FetchNextResults(localClient, response.NextUri, results, cancellationToken, stopwatch).ConfigureAwait(false);
             }
             else
             {
@@ -591,7 +599,7 @@ namespace TrinoClient
         /// <returns>Details about the specified Jmx Mbean</returns>
         public async Task<JmxMbeanV1Response> GetJmxMbean(JmxMbeanV1Request request)
         {
-            return await GetJmxMbean(request, CancellationToken.None);
+            return await GetJmxMbean(request, CancellationToken.None).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -615,9 +623,9 @@ namespace TrinoClient
             HttpRequestMessage Request = BuildRequest(Path, HttpMethod.Get);
 
             // Submit the request for details on the requested object name
-            HttpResponseMessage Response = await MakeHttpRequest(Request, cancellationToken);
+            HttpResponseMessage Response = await MakeHttpRequest(Request, cancellationToken).ConfigureAwait(false);
 
-            string content = await Response.Content.ReadAsStringAsync(cancellationToken);
+            string content = await Response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
 
             if (Response.StatusCode != HttpStatusCode.OK)
             {
@@ -648,7 +656,7 @@ namespace TrinoClient
         /// <returns>The http response message from the request.</returns>
         private async Task<HttpResponseMessage> MakeHttpRequest(HttpRequestMessage request, CancellationToken cancellationToken, uint maxRetries = 5)
         {
-            return await MakeHttpRequest(Configuration.IgnoreSslErrors ? IgnoreSslErrorClient : NormalClient, request, cancellationToken, maxRetries);
+            return await MakeHttpRequest(Configuration.IgnoreSslErrors ? IgnoreSslErrorClient : NormalClient, request, cancellationToken, maxRetries).ConfigureAwait(false);
         }
 
 
@@ -669,7 +677,7 @@ namespace TrinoClient
 
             while (Counter < maxRetries)
             {
-                response = await client.SendAsync(request, cancellationToken);
+                response = await client.SendAsync(request, cancellationToken).ConfigureAwait(false);
 
                 switch (response.StatusCode)
                 {
@@ -678,6 +686,8 @@ namespace TrinoClient
                             return response;
                         }
                     case HttpStatusCode.ServiceUnavailable:
+                    case HttpStatusCode.BadGateway:
+                    case HttpStatusCode.GatewayTimeout:
                         {
                             // Retry with an exponential backoff
                             int Milliseconds = (int)Math.Floor(Math.Pow(2, Counter) * 1000);
@@ -687,7 +697,7 @@ namespace TrinoClient
                                 jitter = SharedRandom.Next(0, 1000);
                             }
                             Milliseconds += jitter;
-                            await Task.Delay(Milliseconds, cancellationToken);
+                            await Task.Delay(Milliseconds, cancellationToken).ConfigureAwait(false);
 
                             Counter++;
 
@@ -695,7 +705,7 @@ namespace TrinoClient
                         }
                     default:
                         {
-                            throw new TrinoWebException($"The request to {request.RequestUri} failed, message:{await response.Content.ReadAsStringAsync()}", response.StatusCode);
+                            throw new TrinoWebException($"The request to {request.RequestUri} failed, message:{await response.Content.ReadAsStringAsync().ConfigureAwait(false)}", response.StatusCode);
                         }
                 }
             }
