@@ -18,6 +18,7 @@ namespace TrinoClient.Tests
         { }
 
         [Fact]
+        [Trait("Category", "Integration")]
         public async Task TestPassword()
         {
             // ARRANGE
@@ -43,6 +44,7 @@ namespace TrinoClient.Tests
         }
 
         [Fact]
+        [Trait("Category", "Integration")]
         public async Task CreateSchema()
         {
             // ARRANGE
@@ -66,6 +68,7 @@ namespace TrinoClient.Tests
         }
 
         [Fact]
+        [Trait("Category", "Integration")]
         public async Task CreateTable()
         {
             // ARRANGE
@@ -89,6 +92,7 @@ namespace TrinoClient.Tests
         }
 
         [Fact]
+        [Trait("Category", "Integration")]
         public async Task TestExecuteStatement()
         {
             //ARRANGE
@@ -111,6 +115,7 @@ namespace TrinoClient.Tests
         }
 
         [Fact]
+        [Trait("Category", "Integration")]
         public async Task TestExecuteStatementOrderBy()
         {
             //ARRANGE
@@ -133,6 +138,7 @@ namespace TrinoClient.Tests
         }
 
         [Fact]
+        [Trait("Category", "Integration")]
         public async Task TestExecuteStatementWhere()
         {
             //ARRANGE
@@ -155,6 +161,7 @@ namespace TrinoClient.Tests
         }
 
         [Fact]
+        [Trait("Category", "Integration")]
         public async Task TestQueryResultDataToJson()
         {
             //ARRANGE
@@ -179,6 +186,7 @@ namespace TrinoClient.Tests
         }
 
         [Fact]
+        [Trait("Category", "Integration")]
         public async Task TestQueryResultDataToCsv()
         {
             //ARRANGE
@@ -203,6 +211,7 @@ namespace TrinoClient.Tests
         }
 
         [Fact]
+        [Trait("Category", "Integration")]
         public async Task TestListQueries()
         {
             //ARRANGE
@@ -223,6 +232,7 @@ namespace TrinoClient.Tests
         }
 
         [Fact]
+        [Trait("Category", "Integration")]
         public async Task TestGetQuery()
         {
             //ARRANGE
