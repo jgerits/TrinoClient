@@ -153,6 +153,7 @@ namespace TrinoClient.Model.Client
                 }
                 else
                 {
+#pragma warning disable CS0618 // Using obsolete properties for backward compatibility during migration
                     if (LiteralArguments.Any())
                     {
                         throw new ArgumentException("Unexpected literal arguments from legacy server.");
@@ -162,6 +163,7 @@ namespace TrinoClient.Model.Client
                     {
                         ConvertedArguments.Add(new ClientTypeSignatureParameter(ParameterKind.TYPE, TypeArgument));
                     }
+#pragma warning restore CS0618
                 }
 
                 Arguments = ConvertedArguments;

@@ -6,7 +6,7 @@ namespace TrinoClient.Model.SPI.Block
     /// <summary>
     /// From com.facebook.presto.spi.block.VariableWidthBlockBuilder.java
     /// 
-    /// TODO: Finish implementation
+    /// Note: This is a partial implementation. Additional functionality may be needed.
     /// </summary>
     public class VariableWidthBlockBuilder : IBlockBuilder
     {
@@ -14,7 +14,9 @@ namespace TrinoClient.Model.SPI.Block
 
         private int _InitialEntryCount;
 
+#pragma warning disable CS0414 // Field is assigned but never used - part of incomplete implementation
         private bool _Initialized;
+#pragma warning restore CS0414
 
         private int _InitialSliceOutputSize;
 
@@ -24,9 +26,13 @@ namespace TrinoClient.Model.SPI.Block
 
         private long _ArraysRetainedSizeInBytes;
 
+#pragma warning disable CS0649 // Field is never assigned - part of incomplete implementation
         private int _CurrentEntrySize;
+#pragma warning restore CS0649
 
+#pragma warning disable CS0414 // Field is assigned but never used - part of incomplete implementation
         private SliceOutput _SliceOutput; // = new DynamicSliceOutput(0);
+#pragma warning restore CS0414
 
         #endregion
 

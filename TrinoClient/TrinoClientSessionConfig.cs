@@ -29,7 +29,6 @@ namespace TrinoClient
 
         private string _User;
         private int _Port;
-        private int _CheckInterval;
         private HashSet<string> _ClientTags;
         private IDictionary<string, string> _Properties;
 
