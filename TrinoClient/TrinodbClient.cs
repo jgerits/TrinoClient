@@ -44,12 +44,12 @@ namespace TrinoClient
         /// <summary>
         /// A normal http handler
         /// </summary>
-        private HttpClientHandler NormalHandler;
+        private SocketsHttpHandler NormalHandler;
 
         /// <summary>
         /// A handler that provides a log when SSL errors occur and then ignores those errors
         /// </summary>
-        private HttpClientHandler IgnoreSslErrorHandler;
+        private SocketsHttpHandler IgnoreSslErrorHandler;
 
         /// <summary>
         /// The standard HTTP client using the Handler
@@ -66,33 +66,59 @@ namespace TrinoClient
         /// </summary>
         private void InitializeHttpClients()
         {
-            NormalHandler = new HttpClientHandler()
+            NormalHandler = new SocketsHttpHandler()
             {
                 CookieContainer = Cookies,
                 AutomaticDecompression = Configuration.CompressionDisabled ? DecompressionMethods.None : DecompressionMethods.GZip | DecompressionMethods.Deflate,
-                ServerCertificateCustomValidationCallback = (request, cert, chain, sslPolicyErrors) =>
+                SslOptions = new SslClientAuthenticationOptions
                 {
-                    return sslPolicyErrors == SslPolicyErrors.None;
-                }
+                    RemoteCertificateValidationCallback = (sender, cert, chain, sslPolicyErrors) =>
+                    {
+                        return sslPolicyErrors == SslPolicyErrors.None;
+                    }
+                },
+                // Connection pooling optimizations
+                PooledConnectionLifetime = Configuration.PooledConnectionLifetime,
+                PooledConnectionIdleTimeout = Configuration.PooledConnectionIdleTimeout,
+                MaxConnectionsPerServer = Configuration.MaxConnectionsPerServer,
+                EnableMultipleHttp2Connections = true, // Enable HTTP/2 multiplexing for better performance
+                KeepAlivePingPolicy = HttpKeepAlivePingPolicy.WithActiveRequests, // Send keep-alive pings to detect broken connections
+                KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
+                KeepAlivePingDelay = TimeSpan.FromSeconds(60)
             };
 
-            IgnoreSslErrorHandler = new HttpClientHandler()
+            IgnoreSslErrorHandler = new SocketsHttpHandler()
             {
                 CookieContainer = Cookies,
                 AutomaticDecompression = Configuration.CompressionDisabled ? DecompressionMethods.None : DecompressionMethods.GZip | DecompressionMethods.Deflate,
-                ServerCertificateCustomValidationCallback = (request, cert, chain, sslPolicyErrors) =>
+                SslOptions = new SslClientAuthenticationOptions
                 {
-                    return true;
-                }
+                    RemoteCertificateValidationCallback = (sender, cert, chain, sslPolicyErrors) =>
+                    {
+                        return true; // Ignore all SSL errors
+                    }
+                },
+                // Connection pooling optimizations
+                PooledConnectionLifetime = Configuration.PooledConnectionLifetime,
+                PooledConnectionIdleTimeout = Configuration.PooledConnectionIdleTimeout,
+                MaxConnectionsPerServer = Configuration.MaxConnectionsPerServer,
+                EnableMultipleHttp2Connections = true,
+                KeepAlivePingPolicy = HttpKeepAlivePingPolicy.WithActiveRequests,
+                KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
+                KeepAlivePingDelay = TimeSpan.FromSeconds(60)
             };
 
             NormalClient = new HttpClient(NormalHandler)
             {
-                Timeout = TimeSpan.FromMinutes(5)
+                Timeout = TimeSpan.FromMinutes(5),
+                DefaultRequestVersion = new Version(2, 0), // Prefer HTTP/2
+                DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrLower // Fall back to HTTP/1.1 if HTTP/2 is not available
             };
             IgnoreSslErrorClient = new HttpClient(IgnoreSslErrorHandler)
             {
-                Timeout = TimeSpan.FromMinutes(5)
+                Timeout = TimeSpan.FromMinutes(5),
+                DefaultRequestVersion = new Version(2, 0),
+                DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrLower
             };
         }
 
