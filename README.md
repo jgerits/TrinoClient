@@ -2,8 +2,16 @@
 
 A high-performance .NET client for Trino (formerly PrestoSQL) with advanced optimizations including HTTP compression, connection pooling, HTTP/2 support, and configurable retry logic.
 
+## Packages
+
+This repository contains two NuGet packages:
+
+1. **JGerits.TrinoClient** - The core Trino client library
+2. **JGerits.TrinoClient.EntityFrameworkCore** - Entity Framework Core database provider for Trino
+
 ## Features
 
+### Core Client Features
 - ✅ **HTTP Compression**: Automatic GZip/Deflate compression reduces bandwidth by 70-90%
 - ✅ **HTTP/2 Support**: Modern protocol with multiplexing and header compression
 - ✅ **Connection Pooling**: Advanced connection management with configurable lifetimes
@@ -12,9 +20,27 @@ A high-performance .NET client for Trino (formerly PrestoSQL) with advanced opti
 - ✅ **Async/Await**: Fully asynchronous with optimized context handling
 - ✅ **Configurable Timeouts**: Per-client timeout configuration
 
+### Entity Framework Core Provider Features
+- ✅ **LINQ Queries**: Write type-safe LINQ queries against Trino databases
+- ✅ **Database Scaffolding**: Generate entity classes from existing Trino tables
+- ✅ **Type Mappings**: Full support for Trino data types
+- ✅ **Read Operations**: Query data using EF Core's familiar API
+
+## Installation
+
+### Core Client
+```bash
+dotnet add package JGerits.TrinoClient
+```
+
+### Entity Framework Core Provider
+```bash
+dotnet add package JGerits.TrinoClient.EntityFrameworkCore
+```
+
 ## Usage
 
-### Basic Example
+### Core Client - Basic Example
 
 This demonstrates creating a new client config, initializing an ITrinoClient, and executing a simple query. The
 returned data can be formatted in CSV or JSON. Additionally, all of the raw data is returned from the server
@@ -35,6 +61,57 @@ Console.WriteLine(String.Join("\n", queryResponse.DataToCsv()));
 Console.WriteLine("-------------------------------------------------------------------");
 Console.WriteLine(String.Join("\n", queryResponse.DataToJson()));
 ```
+
+### Entity Framework Core - Basic Example
+
+Use EF Core to query Trino databases with LINQ:
+
+```csharp
+using Microsoft.EntityFrameworkCore;
+using TrinoClient.EntityFrameworkCore.Infrastructure;
+
+public class MyDbContext : DbContext
+{
+    public DbSet<Product> Products { get; set; }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        optionsBuilder.UseTrino(
+            "Host=localhost;Port=8080;Catalog=hive;Schema=default;SSL=false;User=admin"
+        );
+    }
+}
+
+public class Product
+{
+    public int Id { get; set; }
+    public string Name { get; set; }
+    public decimal Price { get; set; }
+}
+
+// Query with LINQ
+using var context = new MyDbContext();
+var expensiveProducts = await context.Products
+    .Where(p => p.Price > 100)
+    .OrderBy(p => p.Name)
+    .ToListAsync();
+```
+
+### Entity Framework Core - Database Scaffolding
+
+Generate entity classes from your existing Trino database:
+
+```bash
+dotnet ef dbcontext scaffold "Host=localhost;Port=8080;Catalog=hive;Schema=sales;SSL=false;User=admin" TrinoClient.EntityFrameworkCore -o Models
+```
+
+This will:
+1. Connect to your Trino database
+2. Read the schema from the specified catalog and schema
+3. Generate entity classes for each table
+4. Create a DbContext class configured for your database
+
+For more details on the Entity Framework Core provider, see [TrinoClient.EntityFrameworkCore/README.md](TrinoClient.EntityFrameworkCore/README.md).
 
 ### Advanced Configuration
 
