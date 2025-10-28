@@ -81,7 +81,7 @@ public class TrinoDbConnection : DbConnection
         }
     }
 
-    public override string ConnectionString
+    public override string? ConnectionString
     {
         get => _connectionString;
         set
@@ -89,7 +89,7 @@ public class TrinoDbConnection : DbConnection
             if (_state == ConnectionState.Open)
                 throw new InvalidOperationException("Cannot change connection string while connection is open");
 
-            _connectionString = value;
+            _connectionString = value ?? throw new ArgumentNullException(nameof(value));
             var newConfig = ParseConnectionString(value);
             
             // Update config properties
@@ -133,16 +133,27 @@ public class TrinoDbConnection : DbConnection
 
     private static TrinoClientSessionConfig ParseConnectionString(string connectionString)
     {
+        if (string.IsNullOrWhiteSpace(connectionString))
+            throw new ArgumentException("Connection string cannot be null or empty", nameof(connectionString));
+
         var parts = connectionString.Split(';', StringSplitOptions.RemoveEmptyEntries)
             .Select(p => p.Split('=', 2))
             .Where(p => p.Length == 2)
             .ToDictionary(p => p[0].Trim().ToLowerInvariant(), p => p[1].Trim());
 
         var host = parts.GetValueOrDefault("host", "localhost");
-        var port = int.Parse(parts.GetValueOrDefault("port", "8080"));
+        
+        var portString = parts.GetValueOrDefault("port", "8080");
+        if (!int.TryParse(portString, out var port) || port <= 0 || port > 65535)
+            throw new ArgumentException($"Invalid port value '{portString}'. Port must be between 1 and 65535.", nameof(connectionString));
+        
         var catalog = parts.GetValueOrDefault("catalog", "default");
         var schema = parts.GetValueOrDefault("schema", "default");
-        var useSsl = bool.Parse(parts.GetValueOrDefault("ssl", "false"));
+        
+        var sslString = parts.GetValueOrDefault("ssl", "false");
+        if (!bool.TryParse(sslString, out var useSsl))
+            throw new ArgumentException($"Invalid SSL value '{sslString}'. Must be 'true' or 'false'.", nameof(connectionString));
+        
         var user = parts.GetValueOrDefault("user", Environment.UserName);
 
         var config = new TrinoClientSessionConfig(catalog, schema)

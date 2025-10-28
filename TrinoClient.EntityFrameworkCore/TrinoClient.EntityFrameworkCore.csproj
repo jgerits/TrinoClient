@@ -7,6 +7,9 @@
     <AssemblyName>TrinoClient.EntityFrameworkCore</AssemblyName>
     <RootNamespace>TrinoClient.EntityFrameworkCore</RootNamespace>
     
+    <!-- Suppress warnings for ADO.NET base class nullability design -->
+    <NoWarn>$(NoWarn);CS8764;CS8765</NoWarn>
+    
     <!-- Version Information -->
     <Version>1.0.0</Version>
     <AssemblyVersion>1.0.0</AssemblyVersion>

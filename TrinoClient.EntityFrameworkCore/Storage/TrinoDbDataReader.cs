@@ -210,6 +210,15 @@ public class TrinoDbDataReader : DbDataReader
         _isClosed = true;
     }
 
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            Close();
+        }
+        base.Dispose(disposing);
+    }
+
     private static Type MapTrinoTypeToClrType(string trinoType)
     {
         return trinoType switch

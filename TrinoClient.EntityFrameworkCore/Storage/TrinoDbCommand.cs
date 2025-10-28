@@ -26,7 +26,7 @@ public class TrinoDbCommand : DbCommand
         _connection = connection;
     }
 
-    public override string CommandText
+    public override string? CommandText
     {
         get => _commandText;
         set => _commandText = value ?? throw new ArgumentNullException(nameof(value));
@@ -72,10 +72,38 @@ public class TrinoDbCommand : DbCommand
         return 0;
     }
 
+    public override async Task<int> ExecuteNonQueryAsync(CancellationToken cancellationToken)
+    {
+        if (_connection == null || _connection.State != ConnectionState.Open)
+            throw new InvalidOperationException("Connection must be open to execute commands");
+
+        if (string.IsNullOrWhiteSpace(_commandText))
+            throw new InvalidOperationException("CommandText must be set");
+
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var client = _connection.GetTrinoClient();
+        var request = new Model.Statement.ExecuteQueryV1Request(_commandText);
+        await client.ExecuteQueryV1(request).ConfigureAwait(false);
+
+        // Return 0 as we don't track affected rows in Trino
+        return 0;
+    }
+
     public override object? ExecuteScalar()
     {
         using var reader = ExecuteReader();
         if (reader.Read() && reader.FieldCount > 0)
+        {
+            return reader.GetValue(0);
+        }
+        return null;
+    }
+
+    public override async Task<object?> ExecuteScalarAsync(CancellationToken cancellationToken)
+    {
+        using var reader = await ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+        if (await reader.ReadAsync(cancellationToken).ConfigureAwait(false) && reader.FieldCount > 0)
         {
             return reader.GetValue(0);
         }
@@ -105,5 +133,31 @@ public class TrinoDbCommand : DbCommand
         var response = client.ExecuteQueryV1(request).GetAwaiter().GetResult();
 
         return new TrinoDbDataReader(response);
+    }
+
+    protected override async Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+    {
+        if (_connection == null || _connection.State != ConnectionState.Open)
+            throw new InvalidOperationException("Connection must be open to execute commands");
+
+        if (string.IsNullOrWhiteSpace(_commandText))
+            throw new InvalidOperationException("CommandText must be set");
+
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var client = _connection.GetTrinoClient();
+        var request = new Model.Statement.ExecuteQueryV1Request(_commandText);
+        var response = await client.ExecuteQueryV1(request).ConfigureAwait(false);
+
+        return new TrinoDbDataReader(response);
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _connection = null;
+        }
+        base.Dispose(disposing);
     }
 }

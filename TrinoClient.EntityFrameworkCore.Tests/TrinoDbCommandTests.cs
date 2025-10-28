@@ -60,4 +60,28 @@ public class TrinoDbCommandTests
         Assert.NotNull(parameters);
         Assert.IsType<TrinoDbParameterCollection>(parameters);
     }
+
+    [Fact]
+    public void Dispose_CleansUpResources()
+    {
+        // Arrange
+        var connection = new TrinoDbConnection("Host=localhost;Port=8080;Catalog=hive;Schema=default;SSL=false;User=test");
+        var command = new TrinoDbCommand("SELECT 1", connection);
+
+        // Act
+        command.Dispose();
+
+        // Assert - should not throw
+        Assert.Null(command.Connection);
+    }
+
+    [Fact]
+    public void CommandText_SetToNull_ThrowsArgumentNullException()
+    {
+        // Arrange
+        var command = new TrinoDbCommand();
+
+        // Act & Assert
+        Assert.Throws<ArgumentNullException>(() => command.CommandText = null!);
+    }
 }

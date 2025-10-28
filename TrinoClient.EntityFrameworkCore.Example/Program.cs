@@ -62,7 +62,7 @@ public class Customer
 
 class Program
 {
-    static async Task Main(string[] args)
+    static Task Main(string[] args)
     {
         Console.WriteLine("Trino Entity Framework Core Provider - Example Application");
         Console.WriteLine("============================================================");
@@ -189,5 +189,7 @@ class Program
         Console.WriteLine();
         Console.WriteLine("For database scaffolding (generate entities from existing tables), run:");
         Console.WriteLine("  dotnet ef dbcontext scaffold \"Host=localhost;Port=8080;Catalog=hive;Schema=default;SSL=false;User=admin\" TrinoClient.EntityFrameworkCore -o Models");
+        
+        return Task.CompletedTask;
     }
 }

@@ -59,4 +59,40 @@ public class TrinoDbConnectionTests
         // Act & Assert
         Assert.Throws<NotSupportedException>(() => connection.BeginTransaction());
     }
+
+    [Fact]
+    public void Constructor_WithInvalidPort_ThrowsArgumentException()
+    {
+        // Arrange
+        var connectionString = "Host=localhost;Port=invalid;Catalog=hive;Schema=default;SSL=false;User=test";
+
+        // Act & Assert
+        var ex = Assert.Throws<ArgumentException>(() => new TrinoDbConnection(connectionString));
+        Assert.Contains("Invalid port value", ex.Message);
+    }
+
+    [Fact]
+    public void Constructor_WithInvalidSSL_ThrowsArgumentException()
+    {
+        // Arrange
+        var connectionString = "Host=localhost;Port=8080;Catalog=hive;Schema=default;SSL=invalid;User=test";
+
+        // Act & Assert
+        var ex = Assert.Throws<ArgumentException>(() => new TrinoDbConnection(connectionString));
+        Assert.Contains("Invalid SSL value", ex.Message);
+    }
+
+    [Fact]
+    public void Constructor_WithNullConnectionString_ThrowsArgumentException()
+    {
+        // Act & Assert
+        Assert.Throws<ArgumentException>(() => new TrinoDbConnection((string)null!));
+    }
+
+    [Fact]
+    public void Constructor_WithEmptyConnectionString_ThrowsArgumentException()
+    {
+        // Act & Assert
+        Assert.Throws<ArgumentException>(() => new TrinoDbConnection(string.Empty));
+    }
 }

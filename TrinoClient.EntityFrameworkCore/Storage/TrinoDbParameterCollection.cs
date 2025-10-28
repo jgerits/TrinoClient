@@ -38,7 +38,9 @@ public class TrinoDbParameterCollection : DbParameterCollection
 
     public override bool Contains(object value)
     {
-        return _parameters.Contains(value as TrinoDbParameter);
+        if (value is TrinoDbParameter param)
+            return _parameters.Contains(param);
+        return false;
     }
 
     public override bool Contains(string value)
@@ -58,7 +60,9 @@ public class TrinoDbParameterCollection : DbParameterCollection
 
     public override int IndexOf(object value)
     {
-        return _parameters.IndexOf(value as TrinoDbParameter);
+        if (value is TrinoDbParameter param)
+            return _parameters.IndexOf(param);
+        return -1;
     }
 
     public override int IndexOf(string parameterName)

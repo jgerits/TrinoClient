@@ -19,7 +19,7 @@ public class TrinoDbParameter : DbParameter
 
     public override bool IsNullable { get; set; }
 
-    public override string ParameterName
+    public override string? ParameterName
     {
         get => _parameterName;
         set => _parameterName = value ?? string.Empty;
@@ -27,7 +27,7 @@ public class TrinoDbParameter : DbParameter
 
     public override int Size { get; set; }
 
-    public override string SourceColumn { get; set; } = string.Empty;
+    public override string? SourceColumn { get; set; }
 
     public override bool SourceColumnNullMapping { get; set; }
 
