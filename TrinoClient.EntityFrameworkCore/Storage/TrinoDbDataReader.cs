@@ -14,11 +14,17 @@ public class TrinoDbDataReader : DbDataReader
     private readonly List<List<object?>> _data;
     private int _currentRow = -1;
     private bool _isClosed = false;
+    private DbConnection? _connectionToClose;
 
     public TrinoDbDataReader(ExecuteQueryV1Response response)
     {
         _response = response ?? throw new ArgumentNullException(nameof(response));
         _data = response.Data?.Select(row => row.Cast<object?>().ToList()).ToList() ?? new List<List<object?>>();
+    }
+
+    internal void SetCloseConnection(DbConnection connection)
+    {
+        _connectionToClose = connection;
     }
 
     public override object this[int ordinal] => GetValue(ordinal);
@@ -207,7 +213,17 @@ public class TrinoDbDataReader : DbDataReader
 
     public override void Close()
     {
+        if (_isClosed)
+            return;
+
         _isClosed = true;
+        
+        // Close connection if CommandBehavior.CloseConnection was specified
+        if (_connectionToClose != null)
+        {
+            _connectionToClose.Close();
+            _connectionToClose = null;
+        }
     }
 
     protected override void Dispose(bool disposing)

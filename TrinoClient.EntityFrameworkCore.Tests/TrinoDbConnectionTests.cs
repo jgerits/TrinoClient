@@ -1,3 +1,4 @@
+using System.Data;
 using Xunit;
 using TrinoClient.EntityFrameworkCore.Storage;
 
@@ -94,5 +95,21 @@ public class TrinoDbConnectionTests
     {
         // Act & Assert
         Assert.Throws<ArgumentException>(() => new TrinoDbConnection(string.Empty));
+    }
+
+    [Fact]
+    public async Task OpenAsync_OpensConnection()
+    {
+        // Arrange
+        var connection = new TrinoDbConnection("Host=localhost;Port=8080;Catalog=hive;Schema=default;SSL=false;User=test");
+
+        // Act
+        await connection.OpenAsync();
+
+        // Assert
+        Assert.Equal(ConnectionState.Open, connection.State);
+        
+        // Cleanup
+        connection.Close();
     }
 }

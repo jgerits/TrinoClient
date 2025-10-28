@@ -89,6 +89,10 @@ public class TrinoDatabaseModelFactory : IDatabaseModelFactory
     {
         var columns = new List<DatabaseColumn>();
 
+        // Validate table name to prevent SQL injection
+        if (!IsValidIdentifier(tableName))
+            throw new ArgumentException($"Invalid table name: {tableName}", nameof(tableName));
+
         var describeCommand = connection.CreateCommand();
         describeCommand.CommandText = $"DESCRIBE {DelimitIdentifier(tableName)}";
 
@@ -116,6 +120,17 @@ public class TrinoDatabaseModelFactory : IDatabaseModelFactory
         }
 
         return columns;
+    }
+
+    private static bool IsValidIdentifier(string identifier)
+    {
+        // SQL identifiers should contain only alphanumeric characters, underscores, and not start with a number
+        // This prevents SQL injection attempts
+        if (string.IsNullOrWhiteSpace(identifier))
+            return false;
+
+        // Allow alphanumeric, underscore, and dot (for schema.table)
+        return identifier.All(c => char.IsLetterOrDigit(c) || c == '_' || c == '.');
     }
 
     private static string DelimitIdentifier(string identifier)

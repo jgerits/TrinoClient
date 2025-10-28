@@ -6,6 +6,12 @@ namespace TrinoClient.EntityFrameworkCore.Storage;
 /// <summary>
 /// ADO.NET DbCommand implementation for Trino
 /// </summary>
+/// <remarks>
+/// Note: The synchronous Execute methods (ExecuteNonQuery, ExecuteReader, ExecuteScalar) use GetAwaiter().GetResult()
+/// internally due to the asynchronous nature of the underlying TrinodbClient. While this is an architectural limitation
+/// of ADO.NET, it may cause deadlocks in UI or ASP.NET contexts. Prefer using the async versions (ExecuteNonQueryAsync,
+/// ExecuteReaderAsync, ExecuteScalarAsync) whenever possible.
+/// </remarks>
 public class TrinoDbCommand : DbCommand
 {
     private TrinoDbConnection? _connection;
@@ -58,11 +64,14 @@ public class TrinoDbCommand : DbCommand
 
     public override int ExecuteNonQuery()
     {
-        if (_connection == null || _connection.State != ConnectionState.Open)
-            throw new InvalidOperationException("Connection must be open to execute commands");
+        if (_connection == null)
+            throw new InvalidOperationException("ExecuteNonQuery requires an open and available connection. The connection's current state is closed.");
+        
+        if (_connection.State != ConnectionState.Open)
+            throw new InvalidOperationException($"ExecuteNonQuery requires an open connection. The connection's current state is {_connection.State}.");
 
         if (string.IsNullOrWhiteSpace(_commandText))
-            throw new InvalidOperationException("CommandText must be set");
+            throw new InvalidOperationException("ExecuteNonQuery: CommandText property has not been initialized.");
 
         var client = _connection.GetTrinoClient();
         var request = new Model.Statement.ExecuteQueryV1Request(_commandText);
@@ -74,11 +83,14 @@ public class TrinoDbCommand : DbCommand
 
     public override async Task<int> ExecuteNonQueryAsync(CancellationToken cancellationToken)
     {
-        if (_connection == null || _connection.State != ConnectionState.Open)
-            throw new InvalidOperationException("Connection must be open to execute commands");
+        if (_connection == null)
+            throw new InvalidOperationException("ExecuteNonQueryAsync requires an open and available connection. The connection's current state is closed.");
+        
+        if (_connection.State != ConnectionState.Open)
+            throw new InvalidOperationException($"ExecuteNonQueryAsync requires an open connection. The connection's current state is {_connection.State}.");
 
         if (string.IsNullOrWhiteSpace(_commandText))
-            throw new InvalidOperationException("CommandText must be set");
+            throw new InvalidOperationException("ExecuteNonQueryAsync: CommandText property has not been initialized.");
 
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -122,26 +134,40 @@ public class TrinoDbCommand : DbCommand
 
     protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
     {
-        if (_connection == null || _connection.State != ConnectionState.Open)
-            throw new InvalidOperationException("Connection must be open to execute commands");
+        if (_connection == null)
+            throw new InvalidOperationException("ExecuteReader requires an open and available connection. The connection's current state is closed.");
+        
+        if (_connection.State != ConnectionState.Open)
+            throw new InvalidOperationException($"ExecuteReader requires an open connection. The connection's current state is {_connection.State}.");
 
         if (string.IsNullOrWhiteSpace(_commandText))
-            throw new InvalidOperationException("CommandText must be set");
+            throw new InvalidOperationException("ExecuteReader: CommandText property has not been initialized.");
 
         var client = _connection.GetTrinoClient();
         var request = new Model.Statement.ExecuteQueryV1Request(_commandText);
         var response = client.ExecuteQueryV1(request).GetAwaiter().GetResult();
 
-        return new TrinoDbDataReader(response);
+        var reader = new TrinoDbDataReader(response);
+        
+        // Honor CommandBehavior.CloseConnection
+        if ((behavior & CommandBehavior.CloseConnection) == CommandBehavior.CloseConnection)
+        {
+            reader.SetCloseConnection(_connection);
+        }
+
+        return reader;
     }
 
     protected override async Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
     {
-        if (_connection == null || _connection.State != ConnectionState.Open)
-            throw new InvalidOperationException("Connection must be open to execute commands");
+        if (_connection == null)
+            throw new InvalidOperationException("ExecuteReaderAsync requires an open and available connection. The connection's current state is closed.");
+        
+        if (_connection.State != ConnectionState.Open)
+            throw new InvalidOperationException($"ExecuteReaderAsync requires an open connection. The connection's current state is {_connection.State}.");
 
         if (string.IsNullOrWhiteSpace(_commandText))
-            throw new InvalidOperationException("CommandText must be set");
+            throw new InvalidOperationException("ExecuteReaderAsync: CommandText property has not been initialized.");
 
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -149,7 +175,15 @@ public class TrinoDbCommand : DbCommand
         var request = new Model.Statement.ExecuteQueryV1Request(_commandText);
         var response = await client.ExecuteQueryV1(request).ConfigureAwait(false);
 
-        return new TrinoDbDataReader(response);
+        var reader = new TrinoDbDataReader(response);
+        
+        // Honor CommandBehavior.CloseConnection
+        if ((behavior & CommandBehavior.CloseConnection) == CommandBehavior.CloseConnection)
+        {
+            reader.SetCloseConnection(_connection);
+        }
+
+        return reader;
     }
 
     protected override void Dispose(bool disposing)

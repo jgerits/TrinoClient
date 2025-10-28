@@ -7,6 +7,11 @@ namespace TrinoClient.EntityFrameworkCore.Storage;
 /// <summary>
 /// ADO.NET DbConnection implementation for Trino
 /// </summary>
+/// <remarks>
+/// Note: This implementation creates a new TrinodbClient instance on each Open() call without connection pooling.
+/// For high-load production scenarios, consider implementing a connection pooling mechanism or reusing connections
+/// at the application level.
+/// </remarks>
 public class TrinoDbConnection : DbConnection
 {
     private readonly TrinoClientSessionConfig _config;
@@ -79,6 +84,14 @@ public class TrinoDbConnection : DbConnection
             _state = ConnectionState.Broken;
             throw new InvalidOperationException("Failed to open connection to Trino", ex);
         }
+    }
+
+    public override Task OpenAsync(CancellationToken cancellationToken)
+    {
+        // TrinodbClient constructor is synchronous, but we provide async override for consistency
+        cancellationToken.ThrowIfCancellationRequested();
+        Open();
+        return Task.CompletedTask;
     }
 
     public override string? ConnectionString
