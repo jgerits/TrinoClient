@@ -1,0 +1,48 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>TrinoClient.EntityFrameworkCore</AssemblyName>
+    <RootNamespace>TrinoClient.EntityFrameworkCore</RootNamespace>
+    
+    <!-- Version Information -->
+    <Version>1.0.0</Version>
+    <AssemblyVersion>1.0.0</AssemblyVersion>
+    <FileVersion>1.0.0</FileVersion>
+    
+    <!-- Package Metadata -->
+    <PackageId>JGerits.TrinoClient.EntityFrameworkCore</PackageId>
+    <Title>Entity Framework Core Provider for Trino</Title>
+    <Description>Entity Framework Core database provider for Trino (formerly PrestoSQL). Allows using EF Core with Trino databases for querying and generating entities from database schema.</Description>
+    <Authors>Andres Loaiza</Authors>
+    <Company>The Datappeal Company</Company>
+    <Copyright>2023</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/jgerits/TrinoClient</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/jgerits/TrinoClient</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>Trino;Trinodb;EntityFramework;EFCore;ORM;Database;Provider</PackageTags>
+    <PackageReleaseNotes>Entity Framework Core provider for Trino with scaffolding support</PackageReleaseNotes>
+    
+    <!-- Build Configuration -->
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.0">
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TrinoClient\TrinoClient.csproj" />
+  </ItemGroup>
+
+</Project>
