@@ -80,6 +80,8 @@ jobs:
           RELEVANT_PATTERNS=(
             "^TrinoClient/.*\.cs$"
             "^TrinoClient/.*\.csproj$"
+            "^TrinoClient\.EntityFrameworkCore/.*\.cs$"
+            "^TrinoClient\.EntityFrameworkCore/.*\.csproj$"
           )
           
           for file in $CHANGED_FILES; do
@@ -110,24 +112,37 @@ jobs:
         if: steps.check_changes.outputs.relevant == 'true'
         id: meta
         run: |
+          # Get metadata for TrinoClient
           CSPROJ="TrinoClient/TrinoClient.csproj"
-
-          CURRENT_VERSION=$(grep -o '<Version>[^<]*</Version>' "$CSPROJ" | sed 's/<Version>\(.*\)<\/Version>/\1/')
-          if [ -z "$CURRENT_VERSION" ]; then
+          VERSION=$(grep -o '<Version>[^<]*</Version>' "$CSPROJ" | sed 's/<Version>\(.*\)<\/Version>/\1/')
+          if [ -z "$VERSION" ]; then
             echo "Could not determine <Version> from $CSPROJ"
             exit 1
           fi
-
           PACKAGE_ID=$(grep -o '<PackageId>[^<]*</PackageId>' "$CSPROJ" | sed 's/<PackageId>\(.*\)<\/PackageId>/\1/')
           if [ -z "$PACKAGE_ID" ]; then
-            # Fallback to project name when <PackageId> is not specified
-            PACKAGE_ID="TrinoClient"
+            PACKAGE_ID="JGerits.TrinoClient"
           fi
+          echo "TrinoClient - Version: $VERSION, Package ID: $PACKAGE_ID"
 
-          echo "Current version: $CURRENT_VERSION"
-          echo "Package ID: $PACKAGE_ID"
-          echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          # Get metadata for EF Core package
+          EF_CSPROJ="TrinoClient.EntityFrameworkCore/TrinoClient.EntityFrameworkCore.csproj"
+          EF_VERSION=$(grep -o '<Version>[^<]*</Version>' "$EF_CSPROJ" | sed 's/<Version>\(.*\)<\/Version>/\1/')
+          if [ -z "$EF_VERSION" ]; then
+            echo "Could not determine <Version> from $EF_CSPROJ"
+            exit 1
+          fi
+          EF_PACKAGE_ID=$(grep -o '<PackageId>[^<]*</PackageId>' "$EF_CSPROJ" | sed 's/<PackageId>\(.*\)<\/PackageId>/\1/')
+          if [ -z "$EF_PACKAGE_ID" ]; then
+            EF_PACKAGE_ID="JGerits.TrinoClient.EntityFrameworkCore"
+          fi
+          echo "EF Core - Version: $EF_VERSION, Package ID: $EF_PACKAGE_ID"
+
+          # Output metadata for both packages
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "package_id=$PACKAGE_ID" >> $GITHUB_OUTPUT
+          echo "ef_version=$EF_VERSION" >> $GITHUB_OUTPUT
+          echo "ef_package_id=$EF_PACKAGE_ID" >> $GITHUB_OUTPUT
 
       - name: Check if GitHub release exists for current version
         if: steps.check_changes.outputs.relevant == 'true'
@@ -135,6 +150,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # Use the main TrinoClient version for the release tag
           TAG="v${{ steps.meta.outputs.version }}"
           if gh release view "$TAG" >/dev/null 2>&1; then
             echo "exists=true" >> $GITHUB_OUTPUT
@@ -148,12 +164,13 @@ jobs:
         if: steps.check_changes.outputs.relevant == 'true'
         id: nuget_check
         run: |
+          # Check TrinoClient package
           PACKAGE_ID="${{ steps.meta.outputs.package_id }}"
           VERSION="${{ steps.meta.outputs.version }}"
           LOWER_ID=$(echo "$PACKAGE_ID" | tr '[:upper:]' '[:lower:]')
-
+          
           STATUS=$(curl -s -o /tmp/index.json -w "%{http_code}" "https://api.nuget.org/v3-flatcontainer/$LOWER_ID/index.json" 2>&1 || echo "000")
-          echo "NuGet API returned status: $STATUS"
+          echo "NuGet API returned status: $STATUS for $PACKAGE_ID"
           if [ "$STATUS" = "200" ] && grep -q "\"$VERSION\"" /tmp/index.json 2>/dev/null; then
             echo "exists=true" >> $GITHUB_OUTPUT
             echo "NuGet package $PACKAGE_ID version $VERSION exists."
@@ -162,28 +179,51 @@ jobs:
             echo "NuGet package $PACKAGE_ID version $VERSION does not exist."
           fi
 
+          # Check EF Core package
+          EF_PACKAGE_ID="${{ steps.meta.outputs.ef_package_id }}"
+          EF_VERSION="${{ steps.meta.outputs.ef_version }}"
+          EF_LOWER_ID=$(echo "$EF_PACKAGE_ID" | tr '[:upper:]' '[:lower:]')
+          
+          EF_STATUS=$(curl -s -o /tmp/ef_index.json -w "%{http_code}" "https://api.nuget.org/v3-flatcontainer/$EF_LOWER_ID/index.json" 2>&1 || echo "000")
+          echo "NuGet API returned status: $EF_STATUS for $EF_PACKAGE_ID"
+          if [ "$EF_STATUS" = "200" ] && grep -q "\"$EF_VERSION\"" /tmp/ef_index.json 2>/dev/null; then
+            echo "ef_exists=true" >> $GITHUB_OUTPUT
+            echo "NuGet package $EF_PACKAGE_ID version $EF_VERSION exists."
+          else
+            echo "ef_exists=false" >> $GITHUB_OUTPUT
+            echo "NuGet package $EF_PACKAGE_ID version $EF_VERSION does not exist."
+          fi
+
       - name: Restore dependencies
-        if: steps.check_changes.outputs.relevant == 'true' && (steps.release_check.outputs.exists == 'false' || steps.nuget_check.outputs.exists == 'false')
+        if: steps.check_changes.outputs.relevant == 'true' && (steps.release_check.outputs.exists == 'false' || steps.nuget_check.outputs.exists == 'false' || steps.nuget_check.outputs.ef_exists == 'false')
         run: dotnet restore
 
       - name: Build solution
-        if: steps.check_changes.outputs.relevant == 'true' && (steps.release_check.outputs.exists == 'false' || steps.nuget_check.outputs.exists == 'false')
+        if: steps.check_changes.outputs.relevant == 'true' && (steps.release_check.outputs.exists == 'false' || steps.nuget_check.outputs.exists == 'false' || steps.nuget_check.outputs.ef_exists == 'false')
         run: dotnet build --configuration Release --no-restore
 
       - name: Run tests
-        if: steps.check_changes.outputs.relevant == 'true' && (steps.release_check.outputs.exists == 'false' || steps.nuget_check.outputs.exists == 'false')
+        if: steps.check_changes.outputs.relevant == 'true' && (steps.release_check.outputs.exists == 'false' || steps.nuget_check.outputs.exists == 'false' || steps.nuget_check.outputs.ef_exists == 'false')
         run: dotnet test --configuration Release --no-build --verbosity normal --filter "Category!=Integration"
 
       - name: Create NuGet package
-        if: steps.check_changes.outputs.relevant == 'true' && (steps.release_check.outputs.exists == 'false' || steps.nuget_check.outputs.exists == 'false')
+        if: steps.check_changes.outputs.relevant == 'true' && (steps.release_check.outputs.exists == 'false' || steps.nuget_check.outputs.exists == 'false' || steps.nuget_check.outputs.ef_exists == 'false')
         run: dotnet pack --configuration Release --no-build --output ./artifacts
 
       # No version bump or commit. We only act on the existing version.
 
-      - name: Publish to NuGet (only if missing)
+      - name: Publish TrinoClient to NuGet (only if missing)
         if: steps.check_changes.outputs.relevant == 'true' && steps.nuget_check.outputs.exists == 'false'
         run: |
-          dotnet nuget push ./artifacts/*.nupkg \
+          dotnet nuget push ./artifacts/${{ steps.meta.outputs.package_id }}.${{ steps.meta.outputs.version }}.nupkg \
+            --api-key ${{ secrets.NUGET_API_KEY }} \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
+
+      - name: Publish EF Core to NuGet (only if missing)
+        if: steps.check_changes.outputs.relevant == 'true' && steps.nuget_check.outputs.ef_exists == 'false'
+        run: |
+          dotnet nuget push ./artifacts/${{ steps.meta.outputs.ef_package_id }}.${{ steps.meta.outputs.ef_version }}.nupkg \
             --api-key ${{ secrets.NUGET_API_KEY }} \
             --source https://api.nuget.org/v3/index.json \
             --skip-duplicate
@@ -198,5 +238,10 @@ jobs:
             --title "Release v$NEW_VERSION" \
             --notes "Auto-generated release for version $NEW_VERSION
 
+          This release includes both packages:
+          - ${{ steps.meta.outputs.package_id }} v${{ steps.meta.outputs.version }}
+          - ${{ steps.meta.outputs.ef_package_id }} v${{ steps.meta.outputs.ef_version }}
+
           This release was automatically created from the latest commit to the main branch." \
-            ./artifacts/*.nupkg
+            ./artifacts/${{ steps.meta.outputs.package_id }}.${{ steps.meta.outputs.version }}.nupkg \
+            ./artifacts/${{ steps.meta.outputs.ef_package_id }}.${{ steps.meta.outputs.ef_version }}.nupkg
