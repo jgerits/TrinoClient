@@ -121,7 +121,7 @@ jobs:
           fi
           PACKAGE_ID=$(grep -o '<PackageId>[^<]*</PackageId>' "$CSPROJ" | sed 's/<PackageId>\(.*\)<\/PackageId>/\1/')
           if [ -z "$PACKAGE_ID" ]; then
-            PACKAGE_ID="TrinoClient"
+            PACKAGE_ID="JGerits.TrinoClient"
           fi
           echo "TrinoClient - Version: $VERSION, Package ID: $PACKAGE_ID"
 
@@ -134,7 +134,7 @@ jobs:
           fi
           EF_PACKAGE_ID=$(grep -o '<PackageId>[^<]*</PackageId>' "$EF_CSPROJ" | sed 's/<PackageId>\(.*\)<\/PackageId>/\1/')
           if [ -z "$EF_PACKAGE_ID" ]; then
-            EF_PACKAGE_ID="TrinoClient.EntityFrameworkCore"
+            EF_PACKAGE_ID="JGerits.TrinoClient.EntityFrameworkCore"
           fi
           echo "EF Core - Version: $EF_VERSION, Package ID: $EF_PACKAGE_ID"
 
@@ -174,11 +174,9 @@ jobs:
           if [ "$STATUS" = "200" ] && grep -q "\"$VERSION\"" /tmp/index.json 2>/dev/null; then
             echo "exists=true" >> $GITHUB_OUTPUT
             echo "NuGet package $PACKAGE_ID version $VERSION exists."
-            TRINOCLIENT_EXISTS=true
           else
             echo "exists=false" >> $GITHUB_OUTPUT
             echo "NuGet package $PACKAGE_ID version $VERSION does not exist."
-            TRINOCLIENT_EXISTS=false
           fi
 
           # Check EF Core package
